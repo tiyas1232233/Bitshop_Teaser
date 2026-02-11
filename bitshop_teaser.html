@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitshop | Sovereign Feature Tour</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=JetBrains+Mono:wght@500;700;900&family=Inter:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --background: #020617;
+            --surface: #0f172a;
+            --surface-alt: #1e293b;
+            --border: #334155;
+            --accent: #f97316;
+            --success: #10b981;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        /* --- GLOBAL RESET & LAYOUT --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            cursor: none;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            max-width: 100%;
+            overflow-x: hidden;
+            background: #000;
+        }
+
+        body {
+            min-height: 100dvh;
+            width: 100%;
+            display: flex;
+            color: var(--text-primary);
+        }
+
+        /* --- CINEMATIC CAMERA SYSTEM --- */
+        #viewport {
+            width: 100%;
+            height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #app-shell {
+            width: 100%;
+            height: 100dvh;
+            display: flex;
+            background: var(--background);
+            transition: transform 1.2s cubic-bezier(0.2, 1, 0.3, 1), filter 1s ease-in-out, opacity 1s ease;
+            transform-origin: center center;
+            opacity: 0;
+        }
+
+        /* --- WINDOWS-STYLE CURSOR --- */
+        #cursor-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000000;
+        }
+
+        #cursor {
+            width: 20px;
+            height: 26px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+            transition: transform 0.05s linear;
+        }
+
+        .ripple {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .clicking .ripple {
+            animation: ripple-anim 0.4s ease-out;
+        }
+
+        @keyframes ripple-anim {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* --- APP COMPONENTS --- */
+        aside {
+            width: 260px;
+            background: #0b0f1a;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            z-index: 1000;
+            flex-shrink: 0;
+            transition: opacity 0.8s ease-in-out;
+            position: relative;
+        }
+
+        .logo-box {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+
+        .logo-box span {
+            color: var(--accent);
+            font-family: 'Outfit';
+            font-weight: 900;
+            font-size: 26px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            color: var(--text-secondary);
+            font-weight: 900;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            transition: 0.3s;
+            position: relative;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .nav-item.unlocked {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
+            opacity: 1;
+        }
+
+        .btn-auth {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            padding: 18px;
+            border-radius: 16px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 10px;
+            border: none;
+            box-shadow: 0 15px 30px rgba(249, 115, 22, 0.2);
+            margin-top: auto;
+        }
+
+        .profile-card {
+            display: none;
+            margin-top: auto;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        header {
+            height: 80px;
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-mobile-logo {
+            display: none;
+        }
+
+        .node-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #070b14;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        #scene-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .scene {
+            position: absolute;
+            inset: 0;
+            padding: 100px 40px 40px 40px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scene.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .scene h2 {
+            margin-bottom: 32px;
+            font-size: 2.2rem;
+            font-weight: 900;
+        }
+
+        /* FEATURE SPECIFIC */
+        .genesis-box {
+            max-width: 600px;
+            width: 90%;
+            margin: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 32px;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .seed-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 24px 0;
+        }
+
+        .seed-word {
+            background: #020617;
+            border: 1px solid var(--border);
+            padding: 12px 10px 10px 10px;
+            border-radius: 12px;
+            font-family: 'JetBrains Mono';
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .seed-num {
+            position: absolute;
+            top: 4px;
+            left: 6px;
+            font-size: 7px;
+            font-weight: 900;
+            color: var(--accent);
+            opacity: 0.5;
+        }
+
+        .seed-word.reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .p-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .p-card>div {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .p-card .btn-auth {
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .p-price {
+            font-family: 'JetBrains Mono';
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .ai-chat {
+            flex: 1;
+            background: #080c14;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-scroller {
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-msg {
+            max-width: 75%;
+            padding: 14px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .msg-ai {
+            background: var(--surface-alt);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+        }
+
+        .msg-user {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+        }
+
+        .bal-display {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        /* ECONOMY */
+        .eco-compare {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .eco-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .eco-box.v-bitshop {
+            border-color: var(--accent);
+            background: rgba(249, 115, 22, 0.05);
+        }
+
+        .eco-side {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .side-label {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+
+        .bubble-bank {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed #ef4444;
+            border-radius: 50%;
+            animation: pulse-bank 3s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        @keyframes pulse-bank {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.3;
+            }
+        }
+
+        .mesh-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .mesh-point {
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--accent);
+            animation: mesh-pulse 2s infinite alternate;
+        }
+
+        @keyframes mesh-pulse {
+            from {
+                transform: scale(0.8);
+            }
+
+            to {
+                transform: scale(1.2);
+            }
+        }
+
+        /* MONEY PRINTING ANIMATION */
+        .money-bill {
+            font-size: 20px;
+            animation: money-print 2s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes money-print {
+            0% {
+                transform: translateY(-20px) scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        /* BITCOIN GLOW */
+        @keyframes bitcoin-glow {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 5px var(--accent));
+                transform: scale(1);
+            }
+
+            50% {
+                filter: drop-shadow(0 0 20px var(--accent));
+                transform: scale(1.05);
+            }
+        }
+
+        /* BITCOIN COINS */
+        .btc-coin {
+            font-size: 16px;
+            color: var(--accent);
+            animation: btc-float 3s ease-in-out infinite;
+        }
+
+        .btc-coin:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .btc-coin:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .btc-coin:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes btc-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-8px) rotate(5deg);
+            }
+        }
+
+        /* FEED VIDEO */
+        .feed-fake-video {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+
+        .feed-fake-video::after {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+        }
+
+        .product-link-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .product-link-overlay.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* TIMELINE */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 60px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(148, 163, 184, 0.3);
+            z-index: 0;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            top: 24px;
+            left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 1;
+            transition: width 1s linear;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .step {
+            width: 50px;
+            height: 50px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            font-size: 20px;
+            transition: 0.5s;
+            position: relative;
+        }
+
+        .step.active {
+            border-color: var(--accent);
+            background: var(--accent);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+        }
+
+        .step-label {
+            position: absolute;
+            top: 60px;
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .step.active .step-label {
+            color: #fff;
+        }
+
+        /* BITO */
+        #bito-container {
+            position: fixed;
+            bottom: -200px;
+            right: 40px;
+            width: 150px;
+            z-index: 10000;
+            transition: 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        #bito-container.active {
+            bottom: 20px;
+        }
+
+        #bito-container.centered {
+            top: 50% !important;
+            left: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: translate(-50%, -50%) scale(1.2) !important;
+            align-items: center;
+        }
+
+        .bito-bubble {
+            background: #fff;
+            color: #000;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: 0.4s;
+            text-align: center;
+            max-width: 220px;
+            line-height: 1.4;
+        }
+
+        .bito-bubble.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .bito-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent), #f43f5e);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            border: 2px solid #fff;
+            animation: bito-float 3s infinite ease-in-out;
+        }
+
+        @keyframes bito-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(2deg);
+            }
+        }
+
+        /* INTRO */
+        #intro {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 20000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 1s;
+        }
+
+        .btn-start {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 20px 50px;
+            border-radius: 100px;
+            font-weight: 900;
+            font-size: 1.2rem;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .type-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 18px;
+            background: var(--accent);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 0.8s infinite;
+        }
+
+        #tagline-reveal {
+            position: absolute;
+            bottom: 12%;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 10px;
+            color: var(--accent);
+            opacity: 0;
+            transition: 1.5s;
+            transform: translateY(20px);
+        }
+
+        /* --- RESPONSIVE MOBILE (Phase 3 Override) --- */
+        @media (max-width: 768px) {
+            #cursor-container {
+                display: none !important;
+            }
+
+            * {
+                cursor: auto !important;
+            }
+
+            #viewport {
+                height: 100dvh;
+            }
+
+            #app-shell {
+                flex-direction: column;
+                height: 100dvh;
+                transform: none !important;
+                transition: none !important;
+            }
+
+            main {
+                flex: 1;
+                overflow: hidden;
+            }
+
+            aside {
+                width: 100%;
+                height: 64px;
+                flex-direction: row;
+                padding: 0 12px;
+                border-right: none;
+                border-top: 1px solid var(--border);
+                order: 2;
+                justify-content: space-around;
+                align-items: center;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(10px);
+            }
+
+            .logo-box#sidebar-logo {
+                display: none !important;
+            }
+
+            .nav-item {
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                padding: 8px;
+                flex: 1;
+                margin-bottom: 0;
+                border-radius: 0;
+                background: none !important;
+                opacity: 0.3;
+            }
+
+            .nav-item.active {
+                opacity: 1 !important;
+                color: var(--accent) !important;
+                background: none !important;
+                box-shadow: none !important;
+            }
+
+            .nav-icon {
+                display: block !important;
+                width: 22px;
+                height: 22px;
+                stroke: currentColor;
+            }
+
+            .nav-item span {
+                display: none;
+            }
+
+            /* SIGIN IN BUTTON POSITIONING */
+            #auth-section {
+                position: fixed !important;
+                bottom: 80px !important;
+                left: 16px !important;
+                width: auto !important;
+                margin: 0 !important;
+                z-index: 1000 !important;
+            }
+
+            #btn-sidebar-signin {
+                padding: 12px 24px !important;
+                font-size: 9px !important;
+                white-space: nowrap !important;
+                background: var(--accent) !important;
+                border-radius: 12px !important;
+            }
+
+            header {
+                height: 56px;
+                padding: 0 16px;
+                justify-content: space-between;
+            }
+
+            .header-mobile-logo {
+                display: flex !important;
+                align-items: center;
+                gap: 8px;
+                order: -1;
+            }
+
+            .header-mobile-logo div {
+                width: 28px !important;
+                height: 28px !important;
+            }
+
+            .header-mobile-logo span[style*="font-size:18px"] {
+                font-size: 16px !important;
+            }
+
+            .header-mobile-logo span[style*="font-size:14px"] {
+                font-size: 11px !important;
+                letter-spacing: 1px !important;
+            }
+
+            .scene {
+                padding: 20px 16px;
+                overflow-y: auto;
+            }
+
+            .scene h2 {
+                font-size: 1.4rem;
+                margin-bottom: 16px;
+            }
+
+            /* GENESIS */
+            .genesis-box {
+                padding: 20px;
+                max-width: 320px;
+            }
+
+            .seed-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .seed-word {
+                padding: 12px 6px 8px 6px;
+                font-size: 10px;
+            }
+
+            /* MARKETPLACE 3 COLUMNS */
+            .market-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .p-card img {
+                height: 80px !important;
+            }
+
+            .p-price {
+                font-size: 0.75rem;
+                font-family: 'JetBrains Mono';
+                color: #fff;
+            }
+
+            .p-card>div {
+                padding: 12px !important;
+            }
+
+            .p-card .btn-auth {
+                padding: 8px;
+                font-size: 7px;
+                margin-top: 6px;
+            }
+
+            /* TIMELINE FIX */
+            .timeline {
+                margin: 30px auto !important;
+                width: 90%;
+            }
+
+            .timeline::before {
+                display: none;
+            }
+
+            /* Remove double line */
+
+            .timeline-progress {
+                top: 50% !important;
+                left: 0;
+                right: 0;
+                width: auto !important;
+                transform: translateY(-50%) scaleX(0);
+                transform-origin: left;
+                z-index: 1;
+                opacity: 1;
+                height: 2px !important;
+            }
+
+            .step {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+                z-index: 2;
+                background: #000;
+                border: 2px solid var(--border);
+            }
+
+            .step-label {
+                font-size: 7px;
+                top: 38px;
+                width: 60px;
+                line-height: 1;
+            }
+
+            /* SETTLEMENT CARD MOBILE */
+            #settlement-card {
+                padding: 20px !important;
+                border-radius: 16px !important;
+                max-width: 90% !important;
+            }
+
+            #settlement-card h3 {
+                font-size: 1.2rem !important;
+                margin-bottom: 16px !important;
+            }
+
+            #settlement-card>div {
+                font-size: 11px !important;
+                margin-bottom: 8px !important;
+            }
+
+            #settlement-card>div:last-of-type {
+                font-size: 14px !important;
+                padding-top: 12px !important;
+            }
+
+            /* PAYMENT BOX MOBILE */
+            .payment-box {
+                max-width: 90% !important;
+                margin: auto;
+            }
+
+            .payment-box h2 {
+                font-size: 1.4rem !important;
+            }
+
+            /* COMPARISON 2 COLUMNS */
+            #wallet-comparison-area div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 8px !important;
+            }
+
+            .eco-side {
+                padding: 12px;
+            }
+
+            .side-label {
+                font-size: 8px !important;
+                letter-spacing: 1px !important;
+            }
+
+            /* DASHBOARD COMPACT */
+            .dash-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .dash-card {
+                padding: 12px;
+            }
+
+            .dash-card p[style*="font-size:24px"] {
+                font-size: 18px !important;
+            }
+
+            /* FEED TIKTOK STYLE */
+            #scene-feed {
+                padding: 0 !important;
+            }
+
+            #scene-feed h2 {
+                position: absolute;
+                top: 20px;
+                left: 16px;
+                z-index: 100;
+                color: #fff;
+                font-size: 1.2rem;
+            }
+
+            #scene-feed>div {
+                grid-template-columns: 1fr !important;
+                height: 100%;
+                border-radius: 0;
+                gap: 0 !important;
+            }
+
+            .feed-video-container {
+                height: 100%;
+            }
+
+            #feed-sidebar-info {
+                display: none !important;
+            }
+
+            /* Hide sidebar on mobile */
+
+            .product-link-overlay {
+                bottom: 120px !important;
+                left: 16px !important;
+                right: 16px !important;
+                width: auto !important;
+            }
+
+            /* BITO */
+            #bito-container {
+                left: auto;
+                right: 12px;
+                width: 100px;
+            }
+
+            #bito-container.active {
+                bottom: 80px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cursor-container">
+        <svg id="cursor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 3L18 12L4 21V3Z" fill="white" stroke="black" stroke-width="2" />
+        </svg>
+        <div class="ripple" id="ripple"></div>
+    </div>
+
+    <div id="intro">
+        <div class="logo-box" id="intro-logo"
+            style="width:100px; height:100px; border-radius:28px; margin-bottom:1.5rem; box-shadow: 0 0 60px rgba(255, 255, 255, 0.4), 0 0 100px rgba(255, 255, 255, 0.2);">
+            <span style="font-size:50px;">₿</span></div>
+        <h1 id="intro-title" style="font-weight:900; margin-bottom:2rem; letter-spacing:-2px; font-size:2.5rem;">BITSHOP
+        </h1>
+        <button class="btn-start" onclick="startTour()"
+            style="box-shadow: 0 0 40px rgba(247, 115, 22, 0.6), 0 0 80px rgba(247, 115, 22, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5);">START</button>
+    </div>
+
+    <div id="viewport">
+        <div id="app-shell">
+            <aside id="sidebar">
+                <div class="logo-box" id="sidebar-logo"><span>₿</span></div>
+                <div class="nav-item active" id="nav-m">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1 -1 1h-3m-6 0a1 1 0 0 0 1 -1v-4a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Pasar</span>
+                </div>
+                <div class="nav-item" id="nav-f">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 1 1 -18 0 9 9 0 0118 0z"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Konten</span>
+                </div>
+                <div class="nav-item" id="nav-l">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2 2h2a2 2 0 0 1 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Buku Kas</span>
+                </div>
+                <div class="nav-item" id="nav-w">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1 -18 0 9 9 0 0118 0z"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Dompet</span>
+                </div>
+                <div class="nav-item" id="nav-a">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 20.944a11.955 11.955 0 01-8.618-3.04m17.236 0a11.955 11.955 0 01-8.618 3.04"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Guardian</span>
+                </div>
+                <div class="nav-item" id="nav-seller">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Seller</span>
+                </div>
+                <div class="nav-item" id="nav-list">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Jual</span>
+                </div>
+
+                <div id="auth-section" style="margin-top: auto; display: none; flex-direction: column;">
+                    <button class="btn-auth" id="btn-sidebar-signin">MASUK SEKARANG</button>
+                </div>
+            </aside>
+
+            <main id="main-content">
+                <header>
+                    <div class="header-mobile-logo">
+                        <div
+                            style="width:32px; height:32px; background:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                            <span
+                                style="color:var(--accent); font-family:'Outfit'; font-weight:900; font-size:18px;">&#8383;</span>
+                        </div>
+                        <span style="font-weight:900; font-size:14px; letter-spacing:2px; color:#fff;">BITSHOP</span>
+                    </div>
+
+                    <div id="header-auth" style="display: flex; align-items: center; gap: 12px;">
+                        <button class="btn-auth" id="btn-header-signin"
+                            style="width: auto; padding: 10px 20px; font-size: 9px; margin-top: 0; border-radius: 10px; opacity: 1;">MASUK
+                            SEKARANG</button>
+
+                        <div class="profile-card" id="profile"
+                            style="display: none; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); padding: 6px 12px; border-radius: 10px;">
+                            <div
+                                style="width:28px; height:28px; border-radius:8px; background: linear-gradient(135deg, var(--accent), #fcd34d); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 12px;">
+                                S</div>
+                            <div style="text-align: left;">
+                                <p style="font-weight:900; font-size:10px; line-height: 1;">@SovereignNode</p>
+                                <p style="color:var(--accent); font-size:6px; font-weight:900; margin-top: 2px;">KEY
+                                    VERIFIED</p>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div id="scene-container">
+                    <div class="scene active" id="scene-empty"></div>
+
+                    <!-- SCENE 1: GENESIS -->
+                    <div class="scene" id="scene-genesis">
+                        <div class="genesis-box" id="genesis-target">
+                            <h2 style="font-weight:900; font-size:1.8rem; margin-bottom:10px;">Generation of Identity
+                            </h2>
+                            <p
+                                style="font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px;">
+                                Creating 128-bit Entropic Mnemonic...</p>
+                            <div class="seed-grid" id="seed-grid"></div>
+                            <p
+                                style="color:#ef4444; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px;">
+                                Keep your seed phrase safe.</p>
+                            <button class="btn-auth" style="margin-top:20px; width: auto; padding: 16px 40px;"
+                                id="btn-genesis-confirm">Konfirmasi & Simpan</button>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 2: MARKETPLACE -->
+                    <div class="scene" id="scene-market">
+                        <h2 style="font-weight:900; font-size:2.2rem; margin-bottom:20px; letter-spacing:-1px;">Pasar
+                            Berdaulat</h2>
+                        <div class="market-grid">
+                            <div class="p-card"><img
+                                    src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400"
+                                    style="width:100%; height:140px; object-fit:cover;">
+                                <div style="padding:16px;">
+                                    <p style="font-weight:900; font-size:13px; margin-bottom:8px;">MacBook Pro M3 Max
+                                    </p>
+                                    <div class="p-price">1.380.000 <span
+                                            style="font-size:10px; color:var(--accent);">sats</span></div>
+                                    <button class="btn-auth" id="btn-buy-mac"
+                                        style="margin-top: 12px; padding: 10px; font-size: 8px;">BELI SEKARANG</button>
+                                </div>
+                            </div>
+                            <div class="p-card"><img
+                                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+                                    style="width:100%; height:140px; object-fit:cover;">
+                                <div style="padding:16px;">
+                                    <p style="font-weight:900; font-size:13px; margin-bottom:8px;">Nike Air Revolution
+                                    </p>
+                                    <div class="p-price">690.000 <span
+                                            style="font-size:10px; color:var(--accent);">sats</span></div>
+                                    <button class="btn-auth"
+                                        style="margin-top: 12px; padding: 10px; font-size: 8px; opacity: 0.5;">BELI
+                                        SEKARANG</button>
+                                </div>
+                            </div>
+                            <div class="p-card"><img
+                                    src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
+                                    style="width:100%; height:140px; object-fit:cover;">
+                                <div style="padding:16px;">
+                                    <p style="font-weight:900; font-size:13px; margin-bottom:8px;">Arabica Coffee Bean
+                                    </p>
+                                    <div class="p-price">25.000 <span
+                                            style="font-size:10px; color:var(--accent);">sats</span></div>
+                                    <button class="btn-auth"
+                                        style="margin-top: 12px; padding: 10px; font-size: 8px; opacity: 0.5;">BELI
+                                        SEKARANG</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 2b: PAYMENT -->
+                    <div class="scene" id="scene-payment">
+                        <div class="payment-box">
+                            <h2 style="font-weight:900; margin-bottom:20px;">Rincian Pembayaran</h2>
+                            <div style="display:flex; gap:16px; margin-bottom:24px;">
+                                <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=200"
+                                    style="width:80px; height:80px; border-radius:12px; object-fit:cover;">
+                                <div>
+                                    <p style="font-weight:900; font-size:14px;">MacBook Pro M3 Max</p>
+                                    <p style="color:var(--text-secondary); font-size:12px;">Penyimpanan: 1TB SSD</p>
+                                </div>
+                            </div>
+                            <div
+                                style="background:rgba(0,0,0,0.2); border-radius:16px; padding:20px; margin-bottom:24px;">
+                                <div
+                                    style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
+                                    <span>Harga</span><span class="price-mono">1.380.000 sats</span>
+                                </div>
+                                <div
+                                    style="display:flex; justify-content:space-between; font-weight:900; color:var(--accent);">
+                                    <span>TOTAL</span><span class="price-mono">1.380.000 sats</span>
+                                </div>
+                            </div>
+                            <button class="btn-auth" id="btn-pay-now">BAYAR SEKARANG</button>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 2c: TRANSACTION LIFECYCLE -->
+                    <div class="scene" id="scene-transaction">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h2 style="font-weight:900; font-size:1.6rem; margin-bottom:10px;">Alur Transaksi Bitshop
+                            </h2>
+                            <p
+                                style="font-size:9px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px;">
+                                TRACKING P2P SMART CONTRACT STATUS...</p>
+                        </div>
+                        <div class="lifecycle-container">
+                            <div class="timeline" style="height: 60px;">
+                                <div class="timeline-progress" id="timeline-progress"></div>
+                                <div class="step active" id="step-1"><span class="step-label">ESCROW</span>🔒
+                                </div>
+                                <div class="step" id="step-2"><span class="step-label">PROCESS</span>📦</div>
+                                <div class="step" id="step-3"><span class="step-label">SHIPPED</span>🚀</div>
+                                <div class="step" id="step-4"><span class="step-label">ARRIVED</span>✅</div>
+                                <div class="step" id="step-5"><span class="step-label">SETTLED</span>💰</div>
+                            </div>
+
+                            <div id="settlement-card"
+                                style="display: none; margin: auto; background: var(--surface); border: 1px solid var(--success); padding: 40px; border-radius: 32px; text-align: center; max-width: 500px; box-shadow: 0 40px 100px rgba(0,0,0,0.8);">
+                                <h3
+                                    style="color: var(--success); font-weight: 900; margin-bottom: 30px; font-size: 1.8rem;">
+                                    TRANSAKSI SELESAI</h3>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+                                    <span>Harga Produk</span><span class="price-mono">1.380.000 sats</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 20px; color: #ef4444;">
+                                    <span>Marketplace Fee (1%)</span><span
+                                        style="font-family: 'JetBrains Mono';">-13.800 sats</span>
+                                </div>
+                                <div
+                                    style="border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; font-size: 18px; font-weight: 900;">
+                                    <span>Net ke Penjual</span><span class="price-mono"
+                                        style="color: var(--accent);">1.366.200 sats</span>
+                                </div>
+                            </div>
+
+                            <div id="confirm-area" style="display: none; margin-top: 40px; text-align: center;">
+                                <button class="btn-auth" id="btn-confirm-receipt"
+                                    style="width: auto; padding: 20px 60px;">KONFIRMASI PENERIMAAN</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 5: DOMPET & ECONOMY -->
+                    <div class="scene" id="scene-wallet" style="padding-top: 60px; text-align:center;">
+                        <div
+                            style="flex:1; display:grid; place-items:center; position:relative; transform: translateY(-30px);">
+                            <div id="wallet-balance-card"
+                                style="grid-area: 1/1; width: 100%; max-width: 600px; transition: opacity 0.8s ease, transform 0.8s ease;">
+                                <h2 style="font-weight:900; margin-bottom: 20px; color: #fff; font-size: 1.8rem;">Dompet
+                                </h2>
+                                <div
+                                    style="background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid var(--border); border-radius:32px; padding:40px 20px; margin-bottom:30px; box-shadow: 0 40px 100px rgba(0,0,0,0.5);">
+                                    <p
+                                        style="font-size:12px; font-weight:900; color:var(--text-secondary); text-transform:uppercase; margin-bottom:12px; letter-spacing: 2px;">
+                                        Total Saldo</p>
+                                    <div class="bal-display" id="bal-sats"
+                                        style="font-size: 2.5rem; justify-content: center;">0 <span
+                                            style="font-size:1.2rem; color:var(--accent);">sats</span></div>
+                                </div>
+                            </div>
+
+                            <div id="wallet-comparison-area"
+                                style="grid-area: 1/1; display: none; width: 100%; max-width: 900px; opacity: 0; transform: translateY(0); transition: all 1s ease;">
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                                    <!-- BANK SIDE -->
+                                    <div class="eco-side"
+                                        style="border-color: #ef444455; background:rgba(239, 68, 68, 0.02); height: 280px; position: relative; overflow: hidden;">
+                                        <div class="side-label" style="color: #ef4444;">BANK TRADISIONAL</div>
+
+                                        <!-- Money Printer Animation -->
+                                        <div style="position: relative; margin: 20px 0;">
+                                            <div style="font-size: 40px; margin-bottom: 10px;">🏦</div>
+                                            <div id="money-printer"
+                                                style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                                                <!-- Money bills will be added here via JS -->
+                                            </div>
+                                        </div>
+
+                                        <!-- Unlimited Supply Counter -->
+                                        <div
+                                            style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 12px; padding: 8px 12px; margin-top: 10px;">
+                                            <p
+                                                style="font-size: 8px; color: #ef4444; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                                                Supply</p>
+                                            <p id="bank-supply"
+                                                style="font-family: 'JetBrains Mono'; font-size: 16px; font-weight: 900; color: #ef4444;">
+                                                ∞ UNLIMITED</p>
+                                        </div>
+
+                                        <!-- Warning Labels -->
+                                        <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
+                                            <div
+                                                style="background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 4px 8px;">
+                                                <p
+                                                    style="font-size: 7px; color: #ef4444; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                    ⚠️ Inflasi Terus Menerus</p>
+                                            </div>
+                                            <div
+                                                style="background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 4px 8px;">
+                                                <p
+                                                    style="font-size: 7px; color: #ef4444; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                    💸 Hutang/Riba Based</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- BITSHOP SIDE -->
+                                    <div class="eco-side"
+                                        style="border-color: var(--accent); background:rgba(247, 147, 26, 0.02); height: 280px; position: relative; overflow: hidden;">
+                                        <div class="side-label">BITSHOP ECONOMY</div>
+
+                                        <!-- Bitcoin Symbol -->
+                                        <div style="position: relative; margin: 20px 0;">
+                                            <div
+                                                style="font-size: 40px; margin-bottom: 10px; animation: bitcoin-glow 2s infinite;">
+                                                ₿</div>
+                                            <div
+                                                style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; max-width: 120px; margin: 0 auto;">
+                                                <div class="btc-coin">₿</div>
+                                                <div class="btc-coin">₿</div>
+                                                <div class="btc-coin">₿</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Fixed Supply Counter -->
+                                        <div
+                                            style="background: rgba(247, 147, 26, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 8px 12px; margin-top: 10px;">
+                                            <p
+                                                style="font-size: 8px; color: var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                                                Max Supply</p>
+                                            <p
+                                                style="font-family: 'JetBrains Mono'; font-size: 16px; font-weight: 900; color: var(--accent);">
+                                                21,000,000 ₿</p>
+                                        </div>
+
+                                        <!-- Satoshi Microprecision -->
+                                        <div
+                                            style="background: rgba(247, 147, 26, 0.05); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 12px; padding: 6px 10px; margin-top: 8px;">
+                                            <p
+                                                style="font-size: 7px; color: var(--text-secondary); font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                Mikropresisi</p>
+                                            <p
+                                                style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 900; color: var(--accent);">
+                                                1 ₿ = 100,000,000 <span style="font-size: 9px;">sats</span></p>
+                                        </div>
+
+                                        <!-- Benefit Labels -->
+                                        <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
+                                            <div
+                                                style="background: rgba(247, 147, 26, 0.2); border-radius: 8px; padding: 4px 8px;">
+                                                <p
+                                                    style="font-size: 7px; color: var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                    ✅ Kelangkaan Riil</p>
+                                            </div>
+                                            <div
+                                                style="background: rgba(247, 147, 26, 0.2); border-radius: 8px; padding: 4px 8px;">
+                                                <p
+                                                    style="font-size: 7px; color: var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                    🔒 Reserve-Backed Credit</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 6: ADVISOR -->
+                    <div class="scene" id="scene-ai" style="padding-left: 60px; padding-top: 40px;">
+                        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                            <div
+                                style="width:64px; height:64px; border-radius:20px; border:2px solid var(--accent); background: var(--surface); display: flex; align-items:center; justify-content:center; font-size:32px;">
+                                🧕</div>
+                            <div>
+                                <h2 style="font-weight:900; font-size:1.8rem; margin: 0;">Humaira</h2>
+                                <p style="font-size:10px; color:var(--accent); font-weight:900; letter-spacing: 1px;">
+                                    ASISTEN PROTOKOL</p>
+                            </div>
+                        </div>
+                        <div class="ai-chat">
+                            <div class="chat-scroller" id="chat-scroller">
+                                <div class="chat-msg msg-ai">Salam. Saya Humaira. Node Anda telah sinkron. Ada yang bisa
+                                    saya bantu?</div>
+                            </div>
+                            <div style="padding:16px; border-top:1px solid var(--border); display:flex; gap:10px;">
+                                <div id="ai-input-sim"
+                                    style="flex:1; background:#020617; border:1px solid var(--border); padding:14px; border-radius:12px; font-size:13px; color:var(--text-secondary); height: 50px; display: flex; align-items: center;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 7: SELLER DASHBOARD -->
+                    <div class="scene" id="scene-seller">
+                        <h2 style="font-weight:900;">Seller Dashboard</h2>
+                        <div class="dash-grid">
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">TOTAL REVENUE
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px;">Ξ 42.84</p>
+                            </div>
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">REPUTASI P2P
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px; color:var(--success);">
+                                    4.9/5.0</p>
+                            </div>
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">ORDER AKTIF</p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px;">12</p>
+                            </div>
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">SALDO ESCROW
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px; color:var(--accent);">₿ 0.152
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 8: JUAL -->
+                    <div class="scene" id="scene-list"
+                        style="justify-content: center; align-items: center; text-align: center;">
+                        <h2 style="font-weight:900; font-size:2.2rem; margin-bottom:20px;">Jual Produk</h2>
+                        <div
+                            style="width: 100%; max-width:440px; background:var(--surface); border:1px solid var(--border); border-radius:28px; padding:28px;">
+                            <div id="listing-img-container"
+                                style="width:100%; height:200px; border:2px dashed var(--border); border-radius:16px; display:flex; align-items:center; justify-content:center; overflow: hidden; position: relative; margin-bottom: 20px;">
+                                <div id="upload-status"
+                                    style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; opacity: 0; transition: opacity 0.5s;">
+                                    <div
+                                        style="width: 40px; height: 40px; border: 4px solid var(--accent); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;">
+                                    </div>
+                                    <p
+                                        style="margin-top: 15px; font-weight: 900; font-size: 10px; color: var(--accent); letter-spacing: 2px;">
+                                        UPLOADING_IMAGE...</p>
+                                </div>
+                                <img id="listing-img-1"
+                                    src="https://images.unsplash.com/photo-1544648156-5388451882c5?w=400"
+                                    style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s; transform: scale(1.1);">
+                                <img id="listing-img-2"
+                                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+                                    style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s; transform: scale(1.1);">
+                                <div id="img-placeholder" style="font-size: 40px;">📸</div>
+                            </div>
+                            <button class="btn-auth">PUBLIKASIKAN PRODUK</button>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 9: FEED -->
+                    <div class="scene" id="scene-feed" style="padding: 0 !important;">
+                        <div class="feed-video-container"
+                            style="background: #000; border-radius: 0; overflow: hidden; position: relative; height: 100%; width: 100%;">
+                            <!-- Video Player -->
+                            <video id="feed-video"
+                                src="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4" autoplay loop
+                                muted playsinline style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                                onclick="this.paused ? this.play() : this.pause()">
+                            </video>
+
+                            <!-- Reaction Sidebar -->
+                            <div
+                                style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 32px; align-items: center; z-index: 30;">
+                                <!-- Profile -->
+                                <div style="position: relative; margin-bottom: 8px;">
+                                    <div
+                                        style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--accent); padding: 2px; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; overflow: hidden;">
+                                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=SatoshiNode"
+                                            style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                                            alt="">
+                                    </div>
+                                    <div
+                                        style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: var(--accent); border-radius: 50%; padding: 2px; border: 2px solid #000; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                        <svg style="width: 12px; height: 12px; color: white;" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Like -->
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <button id="feed-like-btn"
+                                        style="background: none; border: none; cursor: pointer; transition: all 0.2s;"
+                                        onclick="this.classList.toggle('liked'); this.querySelector('svg').classList.toggle('fill-current'); this.querySelector('svg').classList.toggle('text-orange-500'); this.querySelector('svg').classList.toggle('text-white');">
+                                        <svg style="width: 32px; height: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); color: white;"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                    </button>
+                                    <span
+                                        style="font-size: 11px; font-weight: 900; margin-top: 4px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); text-transform: uppercase; letter-spacing: -0.5px;">1.2K</span>
+                                </div>
+
+                                <!-- Comments -->
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <button
+                                        style="background: none; border: none; cursor: pointer; transition: all 0.2s; color: white;"
+                                        onmouseover="this.style.color='var(--accent)'"
+                                        onmouseout="this.style.color='white'">
+                                        <svg style="width: 32px; height: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                    </button>
+                                    <span
+                                        style="font-size: 11px; font-weight: 900; margin-top: 4px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); text-transform: uppercase; letter-spacing: -0.5px;">89</span>
+                                </div>
+
+                                <!-- Share -->
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <button
+                                        style="background: none; border: none; cursor: pointer; transition: all 0.2s; color: white;"
+                                        onmouseover="this.style.color='var(--accent)'"
+                                        onmouseout="this.style.color='white'">
+                                        <svg style="width: 32px; height: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                        </svg>
+                                    </button>
+                                    <span
+                                        style="font-size: 10px; font-weight: 900; margin-top: 4px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); text-transform: uppercase; letter-spacing: 1px;">Share</span>
+                                </div>
+
+                                <!-- Save -->
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <button id="feed-save-btn"
+                                        style="background: none; border: none; cursor: pointer; transition: all 0.2s; color: white;"
+                                        onclick="this.classList.toggle('saved'); this.querySelector('svg').classList.toggle('fill-current'); this.querySelector('svg').classList.toggle('text-orange-500'); this.querySelector('svg').classList.toggle('text-white');"
+                                        onmouseover="if(!this.classList.contains('saved')) this.style.color='var(--accent)'"
+                                        onmouseout="if(!this.classList.contains('saved')) this.style.color='white'">
+                                        <svg style="width: 32px; height: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                        </svg>
+                                    </button>
+                                    <span
+                                        style="font-size: 10px; font-weight: 900; margin-top: 4px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); text-transform: uppercase; letter-spacing: 1px;">Save</span>
+                                </div>
+                            </div>
+
+                            <!-- Info Overlay -->
+                            <div style="position: absolute; bottom: 40px; left: 16px; right: 80px; z-index: 20;">
+                                <h3
+                                    style="color: white; font-weight: 900; font-size: 18px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); cursor: pointer; margin-bottom: 4px;">
+                                    @SatoshiNode</h3>
+                                <p
+                                    style="color: white; font-size: 14px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); margin-bottom: 16px;">
+                                    Unboxing MacBook Pro M3 Max dari Bitshop! ⚡️</p>
+
+                                <!-- Product Tag -->
+                                <div class="product-link-overlay" id="feed-product-tag"
+                                    style="position: static; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); transform: translateY(0); opacity: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div
+                                            style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                            💻</div>
+                                        <div style="flex: 1;">
+                                            <p
+                                                style="font-weight: 900; font-size: 11px; color: white; text-transform: uppercase; margin: 0;">
+                                                MacBook Pro M3 Max</p>
+                                            <p style="font-size: 9px; color: #64748b; margin: 0;">Beli di Bitshop</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        style="background: var(--accent); color: white; padding: 8px 16px; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='#ea580c'"
+                                        onmouseout="this.style.background='var(--accent)'">Shop</button>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div id="feed-progress"
+                                style="position: absolute; bottom: 0; left: 0; height: 4px; background: var(--accent); width: 0%; z-index: 40; box-shadow: 0 0 10px var(--accent);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="tagline-reveal">SOVEREIGN DECENTRALIZED COMMERCE</div>
+
+    <div id="bito-container">
+        <div class="bito-bubble" id="bito-speech">Halo! Aku Bito!</div>
+        <div class="bito-avatar" id="bito-avatar">👦</div>
+    </div>
+
+    <script>
+        const appShell = document.getElementById('app-shell');
+        const cursorContainer = document.getElementById('cursor-container');
+        const mnWords = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima"];
+        let isTourRunning = false;
+        const isMobile = () => window.innerWidth <= 768;
+
+        window.addEventListener('mousemove', (e) => { if (!isTourRunning) cursorContainer.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`; });
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        async function moveCursor(x, y) {
+            cursorContainer.style.transition = "transform 0.6s cubic-bezier(0.19, 1, 0.22, 1)";
+            cursorContainer.style.transform = `translate(${x}px, ${y}px)`;
+            await wait(700);
+        }
+
+        async function cinematicZoom(scale, x, y, duration = 800) {
+            const originX = (x / window.innerWidth) * 100;
+            const originY = (y / window.innerHeight) * 100;
+            appShell.style.transformOrigin = `${originX}% ${originY}%`;
+            appShell.style.transition = `transform ${duration}ms cubic-bezier(0.2, 1, 0.3, 1)`;
+            appShell.style.transform = `scale(${scale})`;
+            await wait(duration);
+        }
+
+        async function switchScene(sceneId) {
+            const current = document.querySelector('.scene.active');
+            if (current) { current.classList.remove('active'); await wait(100); }
+            document.getElementById(sceneId).classList.add('active');
+            await wait(100);
+        }
+
+        async function bitoSay(text, duration = 4000) {
+            const container = document.getElementById('bito-container');
+            const bubble = document.getElementById('bito-speech');
+            const activeScene = document.querySelector('.scene.active');
+            if (isMobile() && activeScene && activeScene.id === 'scene-empty') {
+                container.classList.add('centered');
+            } else {
+                container.classList.remove('centered');
+                if (isMobile()) {
+                    container.style.top = 'auto'; container.style.left = 'auto';
+                    container.style.right = '12px'; container.style.bottom = '70px';
+                }
+            }
+            container.classList.add('active');
+            bubble.innerText = text;
+            bubble.classList.add('visible');
+            await wait(duration);
+            bubble.classList.remove('visible');
+        }
+
+        async function sidebarClickAction(navId, sceneId) {
+            const navBtn = document.getElementById(navId);
+            const nrect = navBtn.getBoundingClientRect();
+            await moveCursor(nrect.left + nrect.width / 2, nrect.top + nrect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            navBtn.classList.add('active');
+            await switchScene(sceneId);
+        }
+
+        async function startTour() {
+            isTourRunning = true;
+            document.getElementById('intro').style.opacity = "0";
+            await wait(1000);
+            document.getElementById('intro').style.display = "none";
+            appShell.style.opacity = "1";
+
+            await bitoSay("Selamat datang! Aku Bito, si 3D Guide-mu. Ayo kita jelajahi Bitshop!");
+
+            // 1. SIGN IN (HEADER)
+            const btnSignin = document.getElementById('btn-header-signin');
+            const srect = btnSignin.getBoundingClientRect();
+            await moveCursor(srect.left + srect.width / 2, srect.top + srect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // --- 2. GENESIS ---
+            await switchScene('scene-genesis');
+            await bitoSay("Ini adalah Genesis-mu. Segala kunci keamanan disimpan secara berdaulat olehmu.");
+            await cinematicZoom(1.1, window.innerWidth / 2, window.innerHeight / 2, 800);
+            const grid = document.getElementById('seed-grid');
+            grid.innerHTML = mnWords.map((w, i) => `
+                <div class="seed-word" id="w-${i}">
+                    <span class="seed-num">${i + 1}</span>
+                    ${w}
+                </div>`).join('');
+            for (let i = 0; i < 12; i++) { await wait(60); document.getElementById(`w-${i}`).classList.add('reveal'); }
+            const btnConfirm = document.getElementById('btn-genesis-confirm');
+            const crect = btnConfirm.getBoundingClientRect();
+            await moveCursor(crect.left + crect.width / 2, crect.top + crect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // SWITCH SIGN IN TO PROFILE
+            document.getElementById('btn-header-signin').style.display = "none";
+            document.getElementById('profile').style.display = "flex";
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.add('unlocked'));
+            await cinematicZoom(1, window.innerWidth / 2, window.innerHeight / 2, 600);
+
+            // TOUR SEQUENCE
+            await bitoSay("Ayo kita lihat pasar! Semua ini berbasis Peer-to-Peer tanpa perantara.");
+            await sidebarClickAction('nav-m', 'scene-market');
+
+            // --- 3. CLICK BUY PRODUCT ---
+            await wait(1000);
+            const btnBuy = document.getElementById('btn-buy-mac');
+            const brect = btnBuy.getBoundingClientRect();
+            await moveCursor(brect.left + brect.width / 2, brect.top + brect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // --- 4. PAYMENT PAGE ---
+            await switchScene('scene-payment');
+            await bitoSay("Pembayaran menggunakan Satoshi Credit Internal Bitshop yang memiliki nilai kelangkaan riil.");
+            await wait(1000);
+            const btnPay = document.getElementById('btn-pay-now');
+            const prect = btnPay.getBoundingClientRect();
+            await moveCursor(prect.left + prect.width / 2, prect.top + prect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // --- 5. TRANSACTION LIFECYCLE ---
+            await switchScene('scene-transaction');
+            await bitoSay("Dana terkunci di kontrak cerdas. Aman, transparan, dan berdaulat.");
+            await wait(1500);
+
+            document.getElementById('timeline-progress').style.width = "25%";
+            await wait(1000);
+            document.getElementById('step-1').style.borderColor = "var(--accent)";
+            document.getElementById('step-2').classList.add('active');
+
+            document.getElementById('timeline-progress').style.width = "50%";
+            await wait(1000);
+            document.getElementById('step-3').classList.add('active');
+
+            await bitoSay("Kurir bergerak! Pengiriman dilacak secara otomatis oleh protokol.");
+            await wait(3500);
+
+            document.getElementById('timeline-progress').style.width = "75%";
+            await wait(1000);
+            document.getElementById('step-4').classList.add('active');
+            document.getElementById('confirm-area').style.display = "block";
+            await bitoSay("Barang sampai! Konfirmasi sekarang untuk melepas dana ke penjual.");
+            await wait(1500);
+
+            const btnConf = document.getElementById('btn-confirm-receipt');
+            const crect2 = btnConf.getBoundingClientRect();
+            await moveCursor(crect2.left + crect2.width / 2, crect2.top + crect2.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            document.getElementById('timeline-progress').style.width = "100%";
+            await wait(1000);
+            document.getElementById('step-5').classList.add('active');
+            document.getElementById('confirm-area').style.display = "none";
+
+            const timeline = document.querySelector('.timeline');
+            timeline.style.opacity = "0";
+            await wait(500);
+            timeline.style.display = "none";
+
+            const settle = document.getElementById('settlement-card');
+            settle.style.display = "block";
+            settle.style.opacity = "0";
+            settle.style.transform = "scale(0.9)";
+            settle.style.transition = "all 1s cubic-bezier(0.19, 1, 0.22, 1)";
+            await wait(100);
+            settle.style.opacity = "1";
+            settle.style.transform = "scale(1)";
+
+            await bitoSay("Hebat! Dana dilepaskan ke penjual, dan marketplace hanya mengambil fee 1%.");
+            await wait(3000);
+
+            // --- 6. FEED ---
+            await bitoSay("Bitshop juga sosial! Kamu bisa belanja langsung dari konten favoritmu.");
+            await sidebarClickAction('nav-f', 'scene-feed');
+
+            const feedProgress = document.getElementById('feed-progress');
+            if (feedProgress) {
+                feedProgress.style.transition = "width 5s linear";
+                setTimeout(() => feedProgress.style.width = "100%", 100);
+            }
+
+            await wait(2000);
+            const feedTag = document.getElementById('feed-product-tag');
+            if (feedTag) feedTag.classList.add('active');
+            await wait(1200);
+            if (feedTag) {
+                const frect = feedTag.getBoundingClientRect();
+                await moveCursor(frect.left + frect.width / 2, frect.top + frect.height / 2);
+                cursorContainer.classList.add('clicking');
+                await wait(400);
+                cursorContainer.classList.remove('clicking');
+            }
+            await wait(1500);
+
+            // --- 7. WALLET & SOVEREIGN ECONOMY ---
+            await sidebarClickAction('nav-w', 'scene-wallet');
+
+            const balCard = document.getElementById('wallet-balance-card');
+            const compareArea = document.getElementById('wallet-comparison-area');
+
+            balCard.style.opacity = "1";
+            balCard.style.display = "block";
+            compareArea.style.display = "none";
+            compareArea.style.opacity = "0";
+
+            await bitoSay("Lihat akumulasi asetmu! Bitshop berbasis ekonomi nyata.");
+            const balSats = document.getElementById('bal-sats');
+            for (let i = 0; i <= 30; i++) {
+                balSats.innerHTML = `${Intl.NumberFormat('id-ID').format(Math.floor(125000000 * (i / 30)))} <span style="font-size:1.2rem; color:var(--accent);">sats</span>`;
+                await wait(20);
+            }
+            await wait(2500);
+
+            await bitoSay("Bandingkan! Bank tradisional kehilangan nilai lewat inflasi.");
+            balCard.style.opacity = "0";
+            balCard.style.transform = "scale(0.95)";
+            await wait(800);
+            balCard.style.display = "none";
+
+            compareArea.style.display = "block";
+            await wait(50);
+            compareArea.style.opacity = "1";
+            compareArea.style.transform = "translateY(0)";
+
+            // Start money printing animation
+            const moneyPrinter = document.getElementById('money-printer');
+            let moneyCount = 0;
+            const printMoney = setInterval(() => {
+                if (moneyCount < 8) {
+                    const bill = document.createElement('div');
+                    bill.className = 'money-bill';
+                    bill.textContent = '💵';
+                    moneyPrinter.appendChild(bill);
+                    moneyCount++;
+
+                    // Remove old bills to prevent overflow
+                    if (moneyPrinter.children.length > 3) {
+                        moneyPrinter.removeChild(moneyPrinter.firstChild);
+                    }
+                } else {
+                    clearInterval(printMoney);
+                }
+            }, 400);
+
+            await wait(2500);
+
+            // FINAL OUTRO
+            await bitoSay("Itulah visi kami. Kebebasan bertransaksi ada di tanganmu. Sampai jumpa!");
+            await wait(1500);
+
+            appShell.style.opacity = "0";
+            appShell.style.filter = "blur(10px)";
+            appShell.style.transition = "all 2.5s cubic-bezier(0.19, 1, 0.22, 1)";
+            await wait(3500);
+
+            document.body.innerHTML += `<div id="outro" style="position:fixed; inset:0; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999999; opacity:0; transition:3s cubic-bezier(0.19, 1, 0.22, 1);">
+                <div class="logo-box" style="width: 140px; height: 140px; border-radius: 40px; background: #fff; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; box-shadow: 0 0 80px rgba(255, 255, 255, 0.5), 0 0 120px rgba(255, 255, 255, 0.3), 0 0 200px rgba(247, 147, 26, 0.2);">
+                    <span style="font-size: 70px; color: var(--accent);">₿</span>
+                </div>
+                <h1 style="font-size:3rem; font-weight:900; letter-spacing:12px; margin-bottom:1.5rem; color:var(--accent);">BITSHOP</h1>
+                <p style="color:#fff; font-weight:900; letter-spacing:6px; font-size:12px; opacity:0.8; text-transform:uppercase; text-align:center;">Sovereign Decentralized Commerce</p>
+                <button class="btn-auth" style="width:auto; padding:20px 60px; border-radius:100px; font-size:12px; margin-top: 60px; background:var(--surface); border:1px solid var(--accent); color:var(--accent); box-shadow: 0 0 40px rgba(247, 115, 22, 0.6), 0 0 80px rgba(247, 115, 22, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5);" onclick="location.reload()">REPLAY THE VISION</button>
+            </div>`;
+            setTimeout(() => {
+                document.getElementById('outro').style.opacity = "1";
+            }, 100);
+        }
+    </script>
+</body>
+
+</html>```
