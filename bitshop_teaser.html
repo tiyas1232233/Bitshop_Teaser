@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitshop | Sovereign Feature Tour</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=JetBrains+Mono:wght@500;700;900&family=Inter:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --background: #020617;
+            --surface: #0f172a;
+            --surface-alt: #1e293b;
+            --border: #334155;
+            --accent: #f97316;
+            --success: #10b981;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        /* --- GLOBAL RESET & LAYOUT --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            cursor: none;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            background: #000;
+            min-height: 100dvh;
+            width: 100%;
+            display: flex;
+            color: var(--text-primary);
+        }
+
+        /* --- CINEMATIC CAMERA SYSTEM --- */
+        #viewport {
+            width: 100%;
+            height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #app-shell {
+            width: 100%;
+            height: 100dvh;
+            display: flex;
+            background: var(--background);
+            transition: transform 1.2s cubic-bezier(0.2, 1, 0.3, 1), filter 1s ease-in-out, opacity 1s ease;
+            transform-origin: center center;
+            opacity: 0;
+        }
+
+        .motion-blur {
+            filter: blur(4px) brightness(1.1);
+        }
+
+        /* --- WINDOWS-STYLE CURSOR --- */
+        #cursor-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000000;
+        }
+
+        #cursor {
+            width: 20px;
+            height: 26px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+            transition: transform 0.05s linear;
+        }
+
+        .ripple {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .clicking .ripple {
+            animation: ripple-anim 0.4s ease-out;
+        }
+
+        @keyframes ripple-anim {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* --- APP COMPONENTS --- */
+        aside {
+            width: 260px;
+            background: #0b0f1a;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            z-index: 1000;
+            flex-shrink: 0;
+            transition: opacity 0.8s ease-in-out;
+            position: relative;
+        }
+
+        .logo-box {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            flex-shrink: 0;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo-box span {
+            color: var(--accent);
+            font-family: 'Outfit';
+            font-weight: 900;
+            font-size: 26px;
+            transition: opacity 0.5s;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            color: var(--text-secondary);
+            font-weight: 900;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            transition: background 0.3s, color 0.3s;
+            position: relative;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .nav-item.unlocked {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
+            opacity: 1;
+        }
+
+        .btn-auth {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            padding: 18px;
+            border-radius: 16px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 10px;
+            border: none;
+            box-shadow: 0 15px 30px rgba(249, 115, 22, 0.2);
+            margin-top: auto;
+        }
+
+        .profile-card {
+            display: none;
+            margin-top: auto;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        header {
+            height: 80px;
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .node-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #070b14;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        #scene-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .scene {
+            position: absolute;
+            inset: 0;
+            padding: 100px 40px 40px 40px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scene h2 {
+            margin-bottom: 32px;
+            font-size: 2.2rem;
+            font-weight: 900;
+        }
+
+        .scene.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* --- FEATURE SPECIFIC STYLES --- */
+        .genesis-box {
+            max-width: 600px;
+            width: 90%;
+            margin: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 32px;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .seed-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 24px 0;
+        }
+
+        .seed-word {
+            background: #020617;
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono';
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: 0.3s;
+        }
+
+        .seed-word.reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .p-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .p-price {
+            font-family: 'JetBrains Mono';
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .ai-chat {
+            flex: 1;
+            background: #080c14;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-scroller {
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-msg {
+            max-width: 75%;
+            padding: 14px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .msg-ai {
+            background: var(--surface-alt);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+        }
+
+        .msg-user {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+        }
+
+        .bal-display {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        /* SETTINGS REDESIGN */
+        .settings-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 280px;
+        }
+
+        .settings-nav-item {
+            padding: 16px 24px;
+            border-radius: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-weight: 900;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .settings-nav-item.active {
+            border-color: var(--accent);
+            color: #fff;
+            background: var(--surface-alt);
+        }
+
+        /* ECONOMY SCENE */
+        .economy-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            flex: 1;
+            align-items: center;
+        }
+
+        .eco-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mesh-viz {
+            flex: 1;
+            position: relative;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mesh-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .economic-good {
+            position: absolute;
+            font-size: 24px;
+            z-index: 10;
+            animation: move-good 3.5s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes move-good {
+            0% {
+                transform: translate(-150px, 80px);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(150px, -80px);
+                opacity: 0;
+            }
+        }
+
+        #intro {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 20000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 1s;
+        }
+
+        .btn-start {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 20px 50px;
+            border-radius: 100px;
+            font-weight: 900;
+            font-size: 1.2rem;
+        }
+
+        .type-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 18px;
+            background: var(--accent);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        #tagline-reveal {
+            position: absolute;
+            bottom: 12%;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 10px;
+            color: var(--accent);
+            opacity: 0;
+            transition: 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+            transform: translateY(20px);
+        }
+
+        /* WALLET ECONOMY */
+        .eco-compare {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .eco-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .eco-box.v-bitshop {
+            border-color: var(--accent);
+            background: rgba(249, 115, 22, 0.05);
+        }
+
+        /* ILLUSTRATIVE ECONOMY */
+        .eco-illustration {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            margin-top: 30px;
+            height: 240px;
+        }
+
+        .eco-side {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .side-label {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+
+        .viz-box {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Bank: Leaky Bubble */
+        .bubble-bank {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed #ef4444;
+            border-radius: 50%;
+            animation: pulse-bank 3s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        @keyframes pulse-bank {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.3;
+            }
+        }
+
+        .leak {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: leak-anim 1.5s infinite linear;
+        }
+
+        @keyframes leak-anim {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+
+        /* Bitshop: Solid Mesh */
+        .mesh-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .mesh-point {
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--accent);
+            animation: mesh-pulse 2s infinite alternate;
+        }
+
+        @keyframes mesh-pulse {
+            from {
+                transform: scale(0.8);
+            }
+
+            to {
+                transform: scale(1.2);
+            }
+        }
+
+        /* FEED VIDEO & LINK */
+        .feed-video-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .feed-fake-video {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%);
+            background-size: 400% 400%;
+            animation: feed-video-shift 4s ease infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feed-fake-video::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(249, 115, 22, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 70% 60%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            animation: feed-light-move 6s ease-in-out infinite alternate;
+        }
+
+        .feed-fake-video::after {
+            content: '▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+        }
+
+        @keyframes feed-video-shift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes feed-light-move {
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes float-item {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .product-link-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .product-link-overlay.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* PAYMENT SCENE */
+        .payment-box {
+            max-width: 500px;
+            margin: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 60px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            top: 24px;
+            left: 0;
+            height: 2px;
+            background: var(--accent);
+            /* Orange flow line */
+            width: 0%;
+            z-index: 0;
+            transition: width 1s linear;
+        }
+
+        .step {
+            width: 50px;
+            height: 50px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            font-size: 20px;
+            transition: 0.5s;
+            position: relative;
+        }
+
+        .step.active {
+            border-color: var(--accent);
+            background: var(--accent);
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+        }
+
+        .step-label {
+            position: absolute;
+            top: 60px;
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .step.active .step-label {
+            color: #fff;
+        }
+
+        .shipping-track {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 40px 0;
+            position: relative;
+            /* No overflow so courier icon can sit on top */
+        }
+
+        .shipping-progress {
+            position: absolute;
+            height: 100%;
+            background: var(--accent);
+            /* Orange line tracking */
+            width: 0%;
+            z-index: 5;
+            transition: 3s linear;
+        }
+
+        .courier-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            /* Perfectly centered on the 4px track line */
+            left: 0%;
+            font-size: 24px;
+            transition: 3s linear;
+            z-index: 10;
+        }
+
+        /* DASHBOARD FIDELIFY */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dash-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .graph-mini {
+            height: 40px;
+            width: 100%;
+            margin-top: 10px;
+            stroke: var(--accent);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* BITO GUIDE */
+        #bito-container {
+            position: fixed;
+            bottom: -200px;
+            right: 40px;
+            width: 300px;
+            z-index: 10000;
+            transition: 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        #bito-container.active {
+            bottom: 20px;
+        }
+
+        .bito-bubble {
+            background: #fff;
+            color: #000;
+            padding: 16px 20px;
+            border-radius: 20px;
+            border-bottom-right-radius: 2px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            margin-bottom: 12px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: 0.4s;
+        }
+
+        .bito-bubble.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .bito-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--accent), #f43f5e);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 4px solid #fff;
+            animation: bito-float 3s infinite ease-in-out;
+        }
+
+        @keyframes bito-float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(2deg);
+            }
+        }
+
+        /* WALLET FLOW */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            opacity: 0.3;
+            transition: 0.5s;
+        }
+
+        .flow-row.active {
+            opacity: 1;
+            border-color: var(--accent);
+        }
+
+        /* ============================================================ */
+        /* RESPONSIVE: TABLET & MOBILE (max-width: 768px)              */
+        /* ============================================================ */
+        @media (max-width: 768px) {
+
+            /* CURSOR → show native on mobile/touch */
+            * {
+                cursor: auto !important;
+            }
+
+            #cursor-container {
+                display: none !important;
+            }
+
+            /* KILL SCALE TRANSFORM — use native mobile layout */
+            #viewport {
+                height: 100dvh;
+                align-items: stretch;
+                justify-content: stretch;
+            }
+
+            #app-shell {
+                flex-direction: column;
+                height: 100dvh;
+                transform: none !important;
+            }
+
+            /* MAIN AREA: fill remaining space */
+            main {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            /* SCENE CONTAINER: scrollable */
+            #scene-container {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* SCENES: proper mobile sizing */
+            .scene {
+                position: relative;
+                inset: auto;
+                padding: 20px 16px 80px 16px;
+                min-height: 100%;
+                overflow-y: auto;
+            }
+
+            .scene h2 {
+                font-size: 1.4rem;
+                margin-bottom: 16px;
+            }
+
+            /* SIDEBAR → horizontal bottom bar (fixed) */
+            aside {
+                width: 100%;
+                height: 60px;
+                flex-direction: row;
+                padding: 8px 12px;
+                border-right: none;
+                border-top: 1px solid var(--border);
+                order: 2;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 4px;
+                align-items: center;
+                flex-shrink: 0;
+            }
+
+            .logo-box {
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                margin-bottom: 0;
+                margin-right: 8px;
+                flex-shrink: 0;
+            }
+
+            .logo-box span {
+                font-size: 20px;
+            }
+
+            .nav-item {
+                padding: 10px 14px;
+                font-size: 9px;
+                letter-spacing: 1px;
+                margin-bottom: 0;
+                white-space: nowrap;
+                flex-shrink: 0;
+                border-radius: 12px;
+            }
+
+            .profile-card {
+                display: none !important;
+            }
+
+            /* HEADER: compact mobile */
+            header {
+                height: 50px;
+                padding: 0 16px;
+                flex-shrink: 0;
+            }
+
+            header h1 {
+                font-size: 0.9rem !important;
+            }
+
+            .node-status {
+                padding: 6px 12px;
+                font-size: 9px;
+            }
+
+            .node-status span[style*="font-size:11px"],
+            .node-status span[style*="font-size:10px"] {
+                font-size: 9px !important;
+            }
+
+            /* GENESIS */
+            .genesis-box {
+                padding: 24px 16px;
+                border-radius: 20px;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .seed-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .seed-word {
+                padding: 10px 6px;
+                font-size: 10px;
+            }
+
+            .btn-auth {
+                padding: 16px;
+                font-size: 10px;
+                border-radius: 14px;
+            }
+
+            /* MARKETPLACE → 2 columns on tablet */
+            .market-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .p-card img {
+                height: 120px !important;
+            }
+
+            .p-price {
+                font-size: 0.9rem;
+            }
+
+            /* PAYMENT */
+            .payment-box {
+                padding: 20px;
+                border-radius: 20px;
+                max-width: 100%;
+            }
+
+            /* TIMELINE */
+            .timeline {
+                margin: 30px 0;
+                gap: 2px;
+            }
+
+            .step {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .step-label {
+                font-size: 7px;
+                top: 44px;
+                letter-spacing: 0.5px;
+            }
+
+            /* WALLET */
+            .bal-display {
+                font-size: 2rem !important;
+            }
+
+            #wallet-balance-card {
+                max-width: 100% !important;
+            }
+
+            #wallet-balance-card div[style*="padding:60px"] {
+                padding: 30px 20px !important;
+                border-radius: 24px !important;
+            }
+
+            #scene-wallet {
+                padding-top: 20px !important;
+            }
+
+            /* WALLET COMPARISON → stack */
+            #wallet-comparison-area {
+                max-width: 100% !important;
+            }
+
+            #wallet-comparison-area div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            .eco-side {
+                padding: 16px;
+                height: auto !important;
+            }
+
+            .side-label {
+                font-size: 10px !important;
+            }
+
+            .flow-row {
+                padding: 12px;
+            }
+
+            /* AI ADVISOR */
+            #scene-ai {
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+                padding-top: 16px !important;
+            }
+
+            .ai-chat {
+                border-radius: 16px;
+            }
+
+            .chat-msg {
+                max-width: 85%;
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            .chat-scroller {
+                padding: 16px;
+            }
+
+            /* SELLER DASHBOARD */
+            .dash-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .dash-card {
+                padding: 16px;
+                border-radius: 16px;
+            }
+
+            /* Seller Analytics → stack */
+            #scene-seller>div[style*="grid-template-columns: 2fr 1fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            /* LISTING */
+            #scene-list div[style*="max-width:440px"] {
+                max-width: 100% !important;
+                padding: 20px !important;
+            }
+
+            /* FEED → stack */
+            #scene-feed {
+                padding: 16px !important;
+            }
+
+            #scene-feed>div[style*="grid-template-columns: 1fr 320px"] {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            #scene-feed h2 {
+                margin-bottom: 12px !important;
+            }
+
+            .product-link-overlay {
+                bottom: 16px !important;
+                left: 12px !important;
+                right: auto !important;
+                max-width: 260px !important;
+            }
+
+            /* ECONOMY VIEW → stack */
+            .economy-view {
+                grid-template-columns: 1fr !important;
+                gap: 20px;
+            }
+
+            /* BITO GUIDE → compact */
+            #bito-container {
+                right: 12px;
+                width: 200px;
+            }
+
+            #bito-container.active {
+                bottom: 70px;
+            }
+
+            .bito-bubble {
+                font-size: 11px;
+                padding: 12px 14px;
+                border-radius: 16px;
+            }
+
+            .bito-avatar {
+                width: 70px;
+                height: 70px;
+                border-radius: 18px;
+                font-size: 36px;
+            }
+
+            /* TAGLINE */
+            #tagline-reveal {
+                font-size: 0.9rem !important;
+                letter-spacing: 3px !important;
+                bottom: 8% !important;
+            }
+
+            /* INTRO → properly centered on mobile */
+            #intro {
+                padding: 40px 24px;
+            }
+
+            #intro h1 {
+                font-size: 2rem !important;
+                letter-spacing: -1px !important;
+            }
+
+            .btn-start {
+                font-size: 0.9rem !important;
+                padding: 18px 40px !important;
+            }
+
+            /* SETTLEMENT CARD — mobile friendly */
+            #settlement-card {
+                max-width: 100% !important;
+                padding: 24px 16px !important;
+                border-radius: 20px !important;
+            }
+        }
+
+        /* ============================================================ */
+        /* RESPONSIVE: SMALL PHONE (max-width: 480px)                   */
+        /* ============================================================ */
+        @media (max-width: 480px) {
+            aside {
+                height: 52px;
+                padding: 6px 8px;
+            }
+
+            .nav-item {
+                padding: 8px 10px;
+                font-size: 8px;
+            }
+
+            header {
+                height: 44px;
+                padding: 0 12px;
+            }
+
+            .scene {
+                padding: 16px 12px 70px 12px;
+            }
+
+            .scene h2 {
+                font-size: 1.2rem;
+                margin-bottom: 12px;
+            }
+
+            /* MARKETPLACE → single column */
+            .market-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .p-card img {
+                height: 160px !important;
+            }
+
+            /* TIMELINE → compact */
+            .step {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+
+            .step-label {
+                font-size: 6px;
+                top: 38px;
+            }
+
+            .timeline {
+                margin: 20px 0;
+            }
+
+            /* DASHBOARD → single column */
+            .dash-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            /* WALLET BALANCE */
+            .bal-display {
+                font-size: 1.6rem !important;
+            }
+
+            /* BITO */
+            #bito-container {
+                width: 170px;
+                right: 10px;
+            }
+
+            #bito-container.active {
+                bottom: 60px;
+            }
+
+            .bito-bubble {
+                font-size: 10px;
+                padding: 10px 12px;
+            }
+
+            .bito-avatar {
+                width: 56px;
+                height: 56px;
+                border-radius: 14px;
+                font-size: 28px;
+            }
+
+            #tagline-reveal {
+                font-size: 0.75rem !important;
+                letter-spacing: 2px !important;
+            }
+
+            /* INTRO → small phone */
+            #intro h1 {
+                font-size: 1.6rem !important;
+            }
+
+            .btn-start {
+                font-size: 0.8rem !important;
+                padding: 16px 32px !important;
+            }
+
+            /* GENESIS */
+            .genesis-box {
+                padding: 20px 12px;
+            }
+
+            .seed-word {
+                padding: 8px 4px;
+                font-size: 9px;
+            }
+
+            /* SETTLEMENT */
+            #settlement-card {
+                padding: 20px 12px !important;
+            }
+
+            #settlement-card h3 {
+                font-size: 1.3rem !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="cursor-container">
+        <svg id="cursor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 3L18 12L4 21V3Z" fill="white" stroke="black" stroke-width="2" />
+        </svg>
+        <div class="ripple" id="ripple"></div>
+    </div>
+
+    <div id="intro">
+        <div class="logo-box" id="intro-logo"
+            style="width:100px; height:100px; border-radius:28px; margin-bottom:1.5rem;"><span
+                style="font-size:50px;">₿</span></div>
+        <h1 id="intro-title" style="font-weight:900; margin-bottom:2rem; letter-spacing:-2px; font-size:2.5rem;">BITSHOP
+        </h1>
+        <button class="btn-start" onclick="startTour()">MULAILAH TUR FITUR</button>
+    </div>
+
+    <div id="viewport">
+        <div id="app-shell">
+            <aside id="sidebar">
+                <div class="logo-box" id="sidebar-logo"><span>₿</span></div>
+                <div class="nav-item" id="nav-m">Pasar</div>
+                <div class="nav-item" id="nav-f">Konten</div>
+                <div class="nav-item" id="nav-l">Buku Kas</div>
+                <div class="nav-item" id="nav-w">Dompet</div>
+                <div class="nav-item" id="nav-a">Advisor</div>
+                <div class="nav-item" id="nav-seller" style="display: none;">Seller Dashboard</div>
+                <div class="nav-item" id="nav-list" style="display: none;">Jual</div>
+
+                <div id="auth-section" style="margin-top: auto; display: flex; flex-direction: column;">
+                    <button class="btn-auth" id="btn-sidebar-signin">MASUK SEKARANG</button>
+                </div>
+
+                <div class="profile-card" id="profile">
+                    <div
+                        style="width:40px; height:40px; border-radius:12px; background: linear-gradient(135deg, var(--accent), #fcd34d); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff;">
+                        S</div>
+                    <div>
+                        <p style="font-weight:900; font-size:12px;">@SovereignNode</p>
+                        <p style="color:var(--accent); font-size:8px; font-weight:900;">KEY VERIFIED</p>
+                    </div>
+                </div>
+            </aside>
+
+            <main id="main-content">
+                <header>
+                    <div
+                        style="font-family:'JetBrains Mono'; font-weight:900; color:var(--accent); letter-spacing:4px; font-size:10px;">
+                        SOVEREIGN_TERMINAL_v1.0</div>
+                    <div class="node-status">
+                        <div
+                            style="width:8px; height:8px; background:var(--success); border-radius:50%; box-shadow:0 0 10px var(--success);">
+                        </div>
+                        <span style="font-size:10px; font-weight:900; letter-spacing:1px;">NODE SYNCED</span>
+                    </div>
+                </header>
+
+                <div id="scene-container">
+                    <div class="scene active" id="scene-empty">
+                        <div style="margin: auto; text-align: center; opacity: 0.2;">
+                            <h2 style="font-weight: 900; font-size: 3rem;">AUTHENTICATION REQUIRED</h2>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 1: GENESIS -->
+                    <div class="scene" id="scene-genesis">
+                        <div class="genesis-box" id="genesis-target">
+                            <h2 style="font-weight:900; font-size:1.8rem; margin-bottom:10px;">Generation of Identity
+                            </h2>
+                            <p
+                                style="font-size:9px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:2px; margin-bottom:24px;">
+                                Creating 128-bit Entropic Mnemonic...</p>
+                            <div class="seed-grid" id="seed-grid"></div>
+                            <p
+                                style="color:#ef4444; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px;">
+                                Keep your seed phrase safe.</p>
+                            <button class="btn-auth" style="margin-top:20px; width: auto; padding: 16px 40px;"
+                                id="btn-genesis-confirm">Konfirmasi & Simpan</button>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 2: MARKETPLACE -->
+                    <div class="scene" id="scene-market">
+                        <h2 style="font-weight:900; font-size:2.2rem; margin-bottom:20px; letter-spacing:-1px;">Pasar
+                            Berdaulat</h2>
+                        <div class="market-grid">
+                            <div class="p-card"><img
+                                    src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400"
+                                    style="width:100%; height:140px; object-fit:cover;">
+                                <div style="padding:16px;">
+                                    <p style="font-weight:900; font-size:13px; margin-bottom:8px;">MacBook Pro M3 Max
+                                    </p>
+                                    <div class="p-price">1.380.000 <span
+                                            style="font-size:10px; color:var(--accent);">sats</span></div>
+                                    <button class="btn-auth" id="btn-buy-mac"
+                                        style="margin-top: 12px; padding: 10px; font-size: 8px;">BELI SEKARANG</button>
+                                </div>
+                            </div>
+                            <div class="p-card"><img
+                                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+                                    style="width:100%; height:140px; object-fit:cover;">
+                                <div style="padding:16px;">
+                                    <p style="font-weight:900; font-size:13px; margin-bottom:8px;">Nike Air Revolution
+                                    </p>
+                                    <div class="p-price">690.000 <span
+                                            style="font-size:10px; color:var(--accent);">sats</span></div>
+                                    <button class="btn-auth"
+                                        style="margin-top: 12px; padding: 10px; font-size: 8px; opacity: 0.5;">BELI
+                                        SEKARANG</button>
+                                </div>
+                            </div>
+                            <div class="p-card"><img
+                                    src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"
+                                    style="width:100%; height:140px; object-fit:cover;">
+                                <div style="padding:16px;">
+                                    <p style="font-weight:900; font-size:13px; margin-bottom:8px;">Arabica Coffee Bean
+                                    </p>
+                                    <div class="p-price">25.000 <span
+                                            style="font-size:10px; color:var(--accent);">sats</span></div>
+                                    <button class="btn-auth"
+                                        style="margin-top: 12px; padding: 10px; font-size: 8px; opacity: 0.5;">BELI
+                                        SEKARANG</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="scene" id="scene-payment">
+                        <div class="payment-box">
+                            <h2 style="font-weight:900; margin-bottom:20px;">Rincian Pembayaran</h2>
+                            <div style="display:flex; gap:16px; margin-bottom:24px;">
+                                <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=200"
+                                    style="width:80px; height:80px; border-radius:12px; object-fit:cover;">
+                                <div>
+                                    <p style="font-weight:900; font-size:14px;">MacBook Pro M3 Max</p>
+                                    <p style="color:var(--text-secondary); font-size:12px;">Penyimpanan: 1TB SSD</p>
+                                </div>
+                            </div>
+                            <div
+                                style="background:rgba(0,0,0,0.2); border-radius:16px; padding:20px; margin-bottom:24px;">
+                                <div
+                                    style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
+                                    <span>Harga</span><span>1.380.000 sats</span>
+                                </div>
+                                <div
+                                    style="display:flex; justify-content:space-between; font-weight:900; color:var(--accent);">
+                                    <span>TOTAL</span><span>1.380.000 sats</span>
+                                </div>
+                            </div>
+                            <button class="btn-auth" id="btn-pay-now">BAYAR DENGAN LIGHTNING</button>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 2c: TRANSACTION LIFECYCLE -->
+                    <div class="scene" id="scene-transaction">
+                        <h2 style="font-weight:900; font-size:2.2rem; margin-bottom:10px;">Alur Transaksi Bitshop</h2>
+                        <p
+                            style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:2px; margin-bottom:40px;">
+                            TRACKING P2P SMART CONTRACT STATUS...</p>
+                        <div class="lifecycle-container">
+                            <div class="timeline">
+                                <div class="timeline-progress" id="timeline-progress"></div>
+                                <div class="step active" id="step-1"><span class="step-label">Escrow Locked</span>🔒
+                                </div>
+                                <div class="step" id="step-2"><span class="step-label">Merchant Processed</span>📦
+                                </div>
+                                <div class="step" id="step-3"><span class="step-label">Shipped P2P</span>🚀</div>
+                                <div class="step" id="step-4"><span class="step-label">Arrived</span>✅</div>
+                                <div class="step" id="step-5"><span class="step-label">Settled</span>💰</div>
+                            </div>
+
+                            <div id="settlement-card"
+                                style="display: none; margin: auto; background: var(--surface); border: 1px solid var(--success); padding: 40px; border-radius: 32px; text-align: center; max-width: 500px; box-shadow: 0 40px 100px rgba(0,0,0,0.8);">
+                                <h3
+                                    style="color: var(--success); font-weight: 900; margin-bottom: 30px; font-size: 1.8rem;">
+                                    TRANSAKSI SELESAI</h3>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+                                    <span>Harga Produk</span><span style="font-family: 'JetBrains Mono';">1.380.000
+                                        sats</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 20px; color: #ef4444;">
+                                    <span>Marketplace Fee (1%)</span><span
+                                        style="font-family: 'JetBrains Mono';">-13.800 sats</span>
+                                </div>
+                                <div
+                                    style="border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; font-size: 18px; font-weight: 900;">
+                                    <span>Net ke Penjual</span><span style="color: var(--accent);">1.366.200 sats</span>
+                                </div>
+                            </div>
+
+                            <div id="confirm-area" style="display: none; margin-top: 40px; text-align: center;">
+                                <button class="btn-auth" id="btn-confirm-receipt"
+                                    style="width: auto; padding: 20px 60px;">KONFIRMASI PENERIMAAN</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- SCENE 5: DOMPET & ECONOMY -->
+                    <div class="scene" id="scene-wallet" style="padding-top: 100px; text-align:center;">
+
+                        <div style="flex:1; display:grid; place-items:center; position:relative;">
+                            <!-- Balance Card (Stack item 1) -->
+                            <div id="wallet-balance-card"
+                                style="grid-area: 1/1; width: 100%; max-width: 600px; transition: opacity 0.8s ease, transform 0.8s ease;">
+                                <h2 style="font-weight:900; margin-bottom: 30px; color: #fff;">Dompet</h2>
+                                <div
+                                    style="background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid var(--border); border-radius:32px; padding:60px; margin-bottom:30px; box-shadow: 0 40px 100px rgba(0,0,0,0.5);">
+                                    <p
+                                        style="font-size:14px; font-weight:900; color:var(--text-secondary); text-transform:uppercase; margin-bottom:16px; letter-spacing: 2px;">
+                                        Total Saldo</p>
+                                    <div class="bal-display" id="bal-sats"
+                                        style="font-size: 2.2rem; justify-content: center;">0
+                                        <span style="font-size:1.2rem; color:var(--accent);">sats</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comparison Area (Stack item 2) -->
+                            <div id="wallet-comparison-area"
+                                style="grid-area: 1/1; display: none; width: 100%; max-width: 900px; opacity: 0; transform: translateY(20px); transition: all 1s ease;">
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:40px;">
+                                    <div class="eco-side"
+                                        style="border-color: #ef444455; background:rgba(239, 68, 68, 0.02);">
+                                        <div class="side-label" style="color: #ef4444;">SKEMA BANK TRADISIONAL</div>
+                                        <div class="flow-container">
+                                            <div class="flow-row" id="bank-f1"><span>🏦</span>
+                                                <p style="font-size:11px;">Simulasi Deposito (Fractional)</p>
+                                            </div>
+                                            <div class="flow-row" id="bank-f2"><span>📉</span>
+                                                <p style="font-size:11px;">Inflasi & Penurunan Nilai Riil</p>
+                                            </div>
+                                            <div class="flow-row" id="bank-f3"><span>⛔</span>
+                                                <p style="font-size:11px;">Kontrol Terpusat & Pembekuan Dana</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="eco-side"
+                                        style="border-color: var(--accent); background:rgba(247, 147, 26, 0.02);">
+                                        <div class="side-label">EKONOMI BERDAULAT BITSHOP</div>
+                                        <div class="flow-container">
+                                            <div class="flow-row" id="bit-f1"><span>⚡</span>
+                                                <p style="font-size:11px;">Satoshi Credit Berbasis Kelangkaan</p>
+                                            </div>
+                                            <div class="flow-row" id="bit-f2"><span>📈</span>
+                                                <p style="font-size:11px;">Nilai Tumbuh dengan Ekonomi Riil</p>
+                                            </div>
+                                            <div class="flow-row" id="bit-f3"><span>🛡️</span>
+                                                <p style="font-size:11px;">100% Kepemilikan & Keamanan P2P</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- closing scene-wallet -->
+
+                    <!-- SCENE 6: ADVISOR -->
+                    <div class="scene" id="scene-ai" style="padding-left: 60px; padding-top: 40px;">
+                        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                            <img src="./assets/humaira_avatar.png"
+                                style="width:64px; height:64px; border-radius:20px; border:2px solid var(--accent); object-fit:cover;">
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                <h2 style="font-weight:900; font-size:1.8rem; line-height: 0.9; margin: 0;">Humaira
+                                </h2>
+                                <p
+                                    style="font-size:10px; color:var(--accent); font-weight:900; margin-top: 5px; letter-spacing: 1px;">
+                                    ASISTEN PROTOKOL</p>
+                            </div>
+                        </div>
+                        <div class="ai-chat">
+                            <div class="chat-scroller" id="chat-scroller">
+                                <div class="chat-msg msg-ai">Salam. Saya Humaira. Node Anda telah sinkron. Ada yang
+                                    bisa
+                                    saya bantu?</div>
+                            </div>
+                            <div style="padding:16px; border-top:1px solid var(--border); display:flex; gap:10px;">
+                                <div id="ai-input-sim"
+                                    style="flex:1; background:#020617; border:1px solid var(--border); padding:14px; border-radius:12px; font-size:13px; color:var(--text-secondary); height: 50px; display: flex; align-items: center;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 7: SELLER DASHBOARD -->
+                    <div class="scene" id="scene-seller">
+                        <h2 style="font-weight:900;">Seller Dashboard</h2>
+
+                        <div class="dash-grid">
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">TOTAL
+                                    REVENUE
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px;">Ξ 42.84</p>
+                                <svg class="graph-mini">
+                                    <path d="M0 35 L10 30 L20 32 L30 15 L40 20 L50 5 L60 10 L70 0" />
+                                </svg>
+                            </div>
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">REPUTASI
+                                    P2P
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px; color:var(--success);">
+                                    4.9/5.0
+                                </p>
+                                <div style="display:flex; gap:2px; margin-top:5px;">⭐⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">ORDER AKTIF
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px;">12</p>
+                                <p style="font-size:9px; color:var(--accent); margin-top:5px;">+3 Baru hari ini</p>
+                            </div>
+                            <div class="dash-card">
+                                <p style="font-size:10px; color:var(--text-secondary); font-weight:900;">SALDO
+                                    ESCROW
+                                </p>
+                                <p style="font-size:24px; font-weight:900; margin-top:5px; color:var(--accent);">₿
+                                    0.152
+                                </p>
+                                <p style="font-size:9px; color:var(--text-secondary); margin-top:5px;">Menunggu
+                                    Konfirmasi
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; flex:1;">
+                            <div
+                                style="background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:24px; display:flex; flex-direction:column;">
+                                <p style="font-weight:900; margin-bottom:20px;">Analitik Promosi Iklan</p>
+                                <div
+                                    style="flex:1; border-left:1px solid var(--border); border-bottom:1px solid var(--border); position:relative; margin-top:20px;">
+                                    <svg width="100%" height="100%" viewBox="0 0 400 150"
+                                        style="position:absolute; inset:0;">
+                                        <path d="M0 150 Q100 100 200 120 T400 30" fill="none" stroke="var(--accent)"
+                                            stroke-width="3" />
+                                        <rect x="350" y="20" width="40" height="10" fill="var(--accent)"
+                                            opacity="0.2" />
+                                    </svg>
+                                    <div
+                                        style="position:absolute; bottom:-25px; left:0; font-size:9px; color:var(--text-secondary);">
+                                        SENIN</div>
+                                    <div
+                                        style="position:absolute; bottom:-25px; right:0; font-size:9px; color:var(--text-secondary);">
+                                        MINGGU</div>
+                                </div>
+                            </div>
+                            <div
+                                style="background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:24px;">
+                                <p style="font-weight:900; margin-bottom:15px;">Persentase Klik</p>
+                                <div
+                                    style="width:120px; height:120px; border-radius:50%; border:12px solid var(--surface-alt); border-top-color:var(--accent); margin:20px auto; display:flex; align-items:center; justify-content:center;">
+                                    <p style="font-weight:900; font-size:20px;">74%</p>
+                                </div>
+                                <p style="text-align:center; font-size:11px; color:var(--text-secondary);">Konversi
+                                    Iklan
+                                    Sangat Tinggi</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SCENE 8: JUAL -->
+                    <div class="scene" id="scene-list"
+                        style="justify-content: center; align-items: center; text-align: center;">
+                        <h2 style="font-weight:900; font-size:2.2rem; margin-bottom:20px;">Jual Produk</h2>
+                        <div
+                            style="width: 100%; max-width:440px; background:var(--surface); border:1px solid var(--border); border-radius:28px; padding:28px;">
+                            <div id="listing-img-container"
+                                style="width:100%; height:200px; border:2px dashed var(--border); border-radius:16px; display:flex; align-items:center; justify-content:center; overflow: hidden; position: relative; margin-bottom: 20px;">
+                                <div id="upload-status"
+                                    style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; opacity: 0; transition: opacity 0.5s;">
+                                    <div
+                                        style="width: 40px; height: 40px; border: 4px solid var(--accent); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;">
+                                    </div>
+                                    <p
+                                        style="margin-top: 15px; font-weight: 900; font-size: 10px; color: var(--accent); letter-spacing: 2px;">
+                                        UPLOADING_IMAGE...</p>
+                                </div>
+                                <img id="listing-img-1"
+                                    src="https://images.unsplash.com/photo-1544648156-5388451882c5?w=400"
+                                    style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s; transform: scale(1.1);">
+                                <img id="listing-img-2"
+                                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+                                    style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s; transform: scale(1.1);">
+                                <div id="img-placeholder" style="font-size: 40px;">📸</div>
+                            </div>
+                            <button class="btn-auth">PUBLIKASIKAN PRODUK</button>
+                        </div>
+                    </div>
+                    <!-- SCENE 9: FEED -->
+                    <div class="scene" id="scene-feed" style="padding: 30px 40px;">
+                        <h2 style="font-weight:900; font-size:2.2rem; margin-bottom:20px;">Konten Sosial</h2>
+                        <div style="flex:1; display:grid; grid-template-columns: 1fr 320px; gap:24px; min-height:0;">
+                            <!-- Main Video Area -->
+                            <div
+                                style="background:var(--surface); border:1px solid var(--border); border-radius:24px; overflow:hidden; display:flex; flex-direction:column;">
+                                <!-- Video Player -->
+                                <div style="flex:1; position:relative; min-height:0;">
+                                    <div class="feed-fake-video">
+                                        <!-- Floating product objects -->
+                                        <div
+                                            style="position:absolute; top:20%; left:15%; font-size:40px; animation: float-item 3s ease-in-out infinite;">
+                                            💻</div>
+                                        <div
+                                            style="position:absolute; top:40%; right:20%; font-size:32px; animation: float-item 3s ease-in-out infinite 0.5s;">
+                                            📦</div>
+                                        <div
+                                            style="position:absolute; bottom:30%; left:40%; font-size:28px; animation: float-item 3s ease-in-out infinite 1s;">
+                                            ⚡</div>
+                                    </div>
+                                    <!-- Product Tag Overlay -->
+                                    <div class="product-link-overlay" id="feed-product-tag"
+                                        style="bottom:20px; left:20px; right:auto; max-width:280px;">
+                                        <div
+                                            style="width:40px; height:40px; background:#f1f5f9; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                                            💻</div>
+                                        <div style="flex:1;">
+                                            <p style="font-weight:900; font-size:11px; color:#000;">MacBook Pro M3 Max
+                                            </p>
+                                            <p style="font-size:9px; color:#64748b;">Beli di Bitshop</p>
+                                        </div>
+                                        <div style="color:var(--accent); font-weight:900; font-size:14px;">→</div>
+                                    </div>
+                                </div>
+                                <!-- Video Controls -->
+                                <div
+                                    style="padding:12px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:16px;">
+                                    <div
+                                        style="width:6px; height:6px; background:var(--accent); border-radius:50; box-shadow: 0 0 8px var(--accent);">
+                                    </div>
+                                    <div
+                                        style="flex:1; height:4px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+                                        <div id="feed-progress"
+                                            style="width:0%; height:100%; background:var(--accent); border-radius:4px; transition: width linear;">
+                                        </div>
+                                    </div>
+                                    <span
+                                        style="font-size:10px; font-family:'JetBrains Mono'; color:var(--text-secondary);">0:00
+                                        / 0:15</span>
+                                </div>
+                            </div>
+                            <!-- Sidebar Info -->
+                            <div style="display:flex; flex-direction:column; gap:16px;">
+                                <!-- Creator Info -->
+                                <div
+                                    style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:20px;">
+                                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                                        <div
+                                            style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, var(--accent), #fcd34d); display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff;">
+                                            S</div>
+                                        <div>
+                                            <p style="font-weight:900; font-size:13px;">@SatoshiNode</p>
+                                            <p style="font-size:9px; color:var(--accent); font-weight:900;">VERIFIED
+                                                SELLER</p>
+                                        </div>
+                                    </div>
+                                    <p style="font-size:12px; line-height:1.6; color:var(--text-secondary);">Unboxing
+                                        MacBook Pro M3 Max dari Bitshop! Transaksi P2P super cepat ⚡️</p>
+                                </div>
+                                <!-- Engagement Stats -->
+                                <div
+                                    style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:20px; display:flex; justify-content:space-around;">
+                                    <div style="text-align:center;">
+                                        <div style="font-size:20px;">❤️</div>
+                                        <p style="font-size:11px; font-weight:900; margin-top:4px;">1.2K</p>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:20px;">💬</div>
+                                        <p style="font-size:11px; font-weight:900; margin-top:4px;">245</p>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:20px;">🔁</div>
+                                        <p style="font-size:11px; font-weight:900; margin-top:4px;">89</p>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:20px;">🔖</div>
+                                        <p style="font-size:11px; font-weight:900; margin-top:4px;">Save</p>
+                                    </div>
+                                </div>
+                                <!-- Related Products -->
+                                <div
+                                    style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:20px; flex:1;">
+                                    <p
+                                        style="font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; color:var(--text-secondary);">
+                                        Produk Terkait</p>
+                                    <div
+                                        style="display:flex; align-items:center; gap:12px; padding:10px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid var(--border); margin-bottom:8px;">
+                                        <div
+                                            style="width:48px; height:48px; background:rgba(249,115,22,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                                            💻</div>
+                                        <div style="flex:1;">
+                                            <p style="font-weight:900; font-size:12px;">MacBook Pro M3</p>
+                                            <p style="font-size:10px; color:var(--accent);">1.380.000 sats</p>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="display:flex; align-items:center; gap:12px; padding:10px; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid var(--border);">
+                                        <div
+                                            style="width:48px; height:48px; background:rgba(249,115,22,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                                            🎧</div>
+                                        <div style="flex:1;">
+                                            <p style="font-weight:900; font-size:12px;">AirPods Pro</p>
+                                            <p style="font-size:10px; color:var(--accent);">180.000 sats</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- closing scene-container -->
+            </main> <!-- closing main-content -->
+        </div> <!-- closing app-shell -->
+    </div> <!-- closing viewport -->
+    <div id="tagline-reveal">SOVEREIGN DECENTRALIZED COMMERCE</div>
+
+    <!-- BITO GUIDE SYSTEM -->
+    <div id="bito-container">
+        <div class="bito-bubble" id="bito-speech">Halo! Aku Bito, pemandumu di Bitshop!</div>
+        <div class="bito-avatar" id="bito-avatar">👦</div>
+    </div>
+
+    <script>
+        const appShell = document.getElementById('app-shell');
+        const cursorContainer = document.getElementById('cursor-container');
+        const mnWords = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima"];
+        let isTourRunning = false;
+
+        const isMobile = () => window.innerWidth <= 768;
+
+        window.addEventListener('mousemove', (e) => { if (!isTourRunning) cursorContainer.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`; });
+
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        async function moveCursor(x, y) {
+            cursorContainer.style.transition = "transform 0.6s cubic-bezier(0.19, 1, 0.22, 1)";
+            cursorContainer.style.transform = `translate(${x}px, ${y}px)`;
+            await wait(700);
+        }
+
+        async function cinematicZoom(scale, x, y, duration = 800) {
+            const originX = (x / window.innerWidth) * 100;
+            const originY = (y / window.innerHeight) * 100;
+            appShell.style.transformOrigin = `${originX}% ${originY}%`;
+            appShell.style.transition = `transform ${duration}ms cubic-bezier(0.2, 1, 0.3, 1)`;
+            appShell.style.transform = `scale(${scale})`;
+            await wait(duration);
+        }
+
+        async function switchScene(sceneId) {
+            const current = document.querySelector('.scene.active');
+            if (current) { current.classList.remove('active'); await wait(100); }
+            document.getElementById(sceneId).classList.add('active');
+            await wait(100);
+        }
+
+        async function typeProfessional(el, text) {
+            el.innerHTML = "";
+            let cursor = document.createElement('span');
+            cursor.className = "type-cursor";
+            el.appendChild(cursor);
+            for (let char of text) {
+                let charNode = document.createTextNode(char);
+                el.insertBefore(charNode, cursor);
+                // Randomized timing for professional feel
+                await wait(Math.random() * 60 + 40);
+            }
+            await wait(500);
+        }
+
+        async function sidebarClickAction(navId, sceneId) {
+            const navEl = document.getElementById(navId);
+            const rect = navEl.getBoundingClientRect();
+            await moveCursor(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            navEl.classList.add('active');
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+            await switchScene(sceneId);
+        }
+
+        async function bitoSay(text, duration = 4000) {
+            const container = document.getElementById('bito-container');
+            const bubble = document.getElementById('bito-speech');
+            container.classList.add('active');
+            bubble.innerText = text;
+            bubble.classList.add('visible');
+            await wait(duration);
+            bubble.classList.remove('visible');
+        }
+
+        async function startTour() {
+            isTourRunning = true;
+            document.getElementById('intro').style.opacity = "0";
+            await wait(1000);
+            document.getElementById('intro').style.display = "none";
+            appShell.style.opacity = "1";
+
+            await bitoSay("Selamat datang! Aku Bito, si 3D Guide-mu. Ayo kita jelajahi Bitshop!");
+
+            // 1. SIGN IN
+            const btnSignin = document.getElementById('btn-sidebar-signin');
+            const srect = btnSignin.getBoundingClientRect();
+            await moveCursor(srect.left + srect.width / 2, srect.top + srect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // --- 2. GENESIS ---
+            await switchScene('scene-genesis');
+            await bitoSay("Ini adalah Genesis-mu. Segala kunci keamanan disimpan secara berdaulat olehmu.");
+            await cinematicZoom(1.1, window.innerWidth / 2, window.innerHeight / 2, 800);
+            const grid = document.getElementById('seed-grid');
+            grid.innerHTML = mnWords.map((w, i) => `<div class="seed-word" id="w-${i}">${w}</div>`).join('');
+            for (let i = 0; i < 12; i++) { await wait(60); document.getElementById(`w-${i}`).classList.add('reveal'); }
+            const btnConfirm = document.getElementById('btn-genesis-confirm');
+            const crect = btnConfirm.getBoundingClientRect();
+            await moveCursor(crect.left + crect.width / 2, crect.top + crect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            document.getElementById('auth-section').style.display = "none";
+            document.getElementById('profile').style.display = "flex";
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.add('unlocked'));
+            await cinematicZoom(1, window.innerWidth / 2, window.innerHeight / 2, 600);
+
+            // TOUR SEQUENCE
+            await bitoSay("Ayo kita lihat pasar! Semua ini berbasis Peer-to-Peer tanpa perantara.");
+            await sidebarClickAction('nav-m', 'scene-market');
+
+            // --- 3. CLICK BUY PRODUCT ---
+            await wait(1000);
+            const btnBuy = document.getElementById('btn-buy-mac');
+            const brect = btnBuy.getBoundingClientRect();
+            await moveCursor(brect.left + brect.width / 2, brect.top + brect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // --- 4. PAYMENT PAGE ---
+            await switchScene('scene-payment');
+            await bitoSay("Pembayaran menggunakan Satoshi Credit Internal Bitshop yang memiliki nilai kelangkaan riil, sangat cocok untuk kebutuhan transaksi cepat dan adil");
+            await wait(1000);
+            const btnPay = document.getElementById('btn-pay-now');
+            const prect = btnPay.getBoundingClientRect();
+            await moveCursor(prect.left + prect.width / 2, prect.top + prect.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            // --- 5. TRANSACTION LIFECYCLE ---
+            await switchScene('scene-transaction');
+            await bitoSay("Dana terkunci di kontrak cerdas. Aman, transparan, dan berdaulat.");
+            await wait(1500);
+
+            document.getElementById('timeline-progress').style.width = "25%";
+            await wait(1000);
+            document.getElementById('step-2').classList.add('active');
+
+            document.getElementById('timeline-progress').style.width = "50%";
+            await wait(1000);
+            document.getElementById('step-3').classList.add('active');
+
+            await bitoSay("Kurir bergerak! Pengiriman dilacak secara otomatis oleh protokol.");
+            await wait(3500);
+
+            document.getElementById('timeline-progress').style.width = "75%";
+            await wait(1000);
+            document.getElementById('step-4').classList.add('active');
+            document.getElementById('confirm-area').style.display = "block";
+            await bitoSay("Barang sampai! Konfirmasi sekarang untuk melepas dana ke penjual.");
+            await wait(1500);
+
+            const btnConf = document.getElementById('btn-confirm-receipt');
+            const crect2 = btnConf.getBoundingClientRect();
+            await moveCursor(crect2.left + crect2.width / 2, crect2.top + crect2.height / 2);
+            cursorContainer.classList.add('clicking');
+            await wait(400);
+            cursorContainer.classList.remove('clicking');
+
+            document.getElementById('timeline-progress').style.width = "100%";
+            await wait(1000);
+            document.getElementById('step-5').classList.add('active');
+            document.getElementById('confirm-area').style.display = "none";
+
+            // Fade out the flow elements
+            const timeline = document.querySelector('.timeline');
+            timeline.style.opacity = "0";
+            await wait(500);
+            timeline.style.display = "none";
+
+            const settle = document.getElementById('settlement-card');
+            settle.style.display = "block";
+            settle.style.opacity = "0";
+            settle.style.transform = "scale(0.9)";
+            settle.style.transition = "all 1s cubic-bezier(0.19, 1, 0.22, 1)";
+            await wait(100);
+            settle.style.opacity = "1";
+            settle.style.transform = "scale(1)";
+
+            await bitoSay("Hebat! Dana dilepaskan ke penjual, dan marketplace hanya mengambil fee 1%.");
+            await wait(3000);
+
+            // --- 6. FEED ---
+            await bitoSay("Bitshop juga sosial! Kamu bisa belanja langsung dari konten favoritmu.");
+            await sidebarClickAction('nav-f', 'scene-feed');
+
+            const feedProgress = document.getElementById('feed-progress');
+            feedProgress.style.transition = "width 5s linear";
+            setTimeout(() => feedProgress.style.width = "100%", 100);
+
+            await wait(2000);
+            const feedTag = document.getElementById('feed-product-tag');
+            if (feedTag) feedTag.classList.add('active');
+            await wait(1200);
+            if (feedTag) {
+                const frect = feedTag.getBoundingClientRect();
+                await moveCursor(frect.left + frect.width / 2, frect.top + frect.height / 2);
+                cursorContainer.classList.add('clicking');
+                await wait(400);
+                cursorContainer.classList.remove('clicking');
+            }
+            await wait(1500);
+
+            // --- 7. WALLET & SOVEREIGN ECONOMY ---
+            await sidebarClickAction('nav-w', 'scene-wallet');
+
+            const balCard = document.getElementById('wallet-balance-card');
+            const compareArea = document.getElementById('wallet-comparison-area');
+
+            // Ensure card is visible and area is hidden initially
+            balCard.style.opacity = "1";
+            balCard.style.display = "block";
+            compareArea.style.display = "none";
+            compareArea.style.opacity = "0";
+
+            await bitoSay("Lihat akumulasi asetmu! Bitshop berbasis ekonomi nyata.");
+            const balSats = document.getElementById('bal-sats');
+            for (let i = 0; i <= 30; i++) {
+                balSats.innerHTML = `${Intl.NumberFormat('id-ID').format(Math.floor(125000000 * (i / 30)))} <span style="font-size:1.2rem; color:var(--accent);">sats</span>`;
+                await wait(20);
+            }
+            await wait(2500);
+
+            // 1. Fade out balance card
+            await bitoSay("Bandingkan! Bank tradisional kehilangan nilai lewat inflasi.");
+            balCard.style.opacity = "0";
+            balCard.style.transform = "scale(0.95)";
+            await wait(800);
+            balCard.style.display = "none";
+
+            // 2. Fade in comparison area in center
+            compareArea.style.display = "block";
+            await wait(50);
+            compareArea.style.opacity = "1";
+            compareArea.style.transform = "translateY(0)";
+
+            document.getElementById('bank-f1').classList.add('active'); await wait(800);
+            document.getElementById('bit-f1').classList.add('active'); await wait(800);
+            document.getElementById('bank-f2').classList.add('active'); await wait(800);
+            document.getElementById('bit-f2').classList.add('active'); await wait(800);
+            document.getElementById('bank-f3').classList.add('active'); await wait(800);
+            document.getElementById('bit-f3').classList.add('active'); await wait(2500);
+
+            // --- 8. AI ADVISOR ---
+            await bitoSay("Butuh saran bisnis? Temui Humaira, asisten protokol-mu.");
+            await sidebarClickAction('nav-a', 'scene-ai');
+            const aiInput = document.getElementById('ai-input-sim');
+            await typeProfessional(aiInput, "Humaira, bagaimana potensi pasar hari ini?");
+            const scroller = document.getElementById('chat-scroller');
+            const m = document.createElement('div'); m.className = "chat-msg msg-user"; m.innerText = "Humaira, bagaimana potensi pasar hari ini?"; scroller.appendChild(m);
+            scroller.scrollTop = scroller.scrollHeight;
+            await wait(1000);
+            const a = document.createElement('div'); a.className = "chat-msg msg-ai"; a.innerText = "Analisis: Volume P2P meningkat 12%. Disarankan untuk restock produk Nike."; scroller.appendChild(a);
+            scroller.scrollTop = scroller.scrollHeight;
+            await wait(3000);
+
+            // --- 9. SELLER DASHBOARD ---
+            await bitoSay("Sekarang lihat sisi penjual! Dashboard-mu lengkap dengan analitik performa iklan.");
+            document.getElementById('nav-seller').style.display = "flex";
+            await sidebarClickAction('nav-seller', 'scene-seller');
+            await wait(4000);
+
+            // --- 10. LISTING ---
+            await bitoSay("Mau jualan? Ambil foto, pasang harga, dan produkmu langsung mendunia.");
+            document.getElementById('nav-list').style.display = "flex";
+            await sidebarClickAction('nav-list', 'scene-list');
+
+            const uploadStatus = document.getElementById('upload-status');
+            const placeholder = document.getElementById('img-placeholder');
+            const img1 = document.getElementById('listing-img-1');
+            const img2 = document.getElementById('listing-img-2');
+
+            // Simulate "Adding" animation
+            await wait(1000);
+            uploadStatus.style.opacity = "1";
+            await wait(1500);
+            uploadStatus.style.opacity = "0";
+            placeholder.style.display = "none";
+            img1.style.opacity = "1";
+            img1.style.transform = "scale(1)";
+            await wait(2000);
+
+            // Swap to another product
+            uploadStatus.style.opacity = "1";
+            await wait(1200);
+            uploadStatus.style.opacity = "0";
+            img1.style.opacity = "0";
+            img2.style.opacity = "1";
+            img2.style.transform = "scale(1)";
+            await wait(2000);
+
+            // FINAL OUTRO
+            await bitoSay("Itulah visi kami. Kebebasan bertransaksi ada di tanganmu. Sampai jumpa!");
+            await wait(1500);
+
+            // Fade out app shell
+            appShell.style.opacity = "0";
+            appShell.style.filter = "blur(10px)";
+            appShell.style.transition = "all 2.5s cubic-bezier(0.19, 1, 0.22, 1)";
+
+            // Wait for fade to complete, then 1s black screen
+            await wait(3500);
+
+            document.body.innerHTML += `<div id="outro" style="position:fixed; inset:0; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999999; opacity:0; transition:3s cubic-bezier(0.19, 1, 0.22, 1);">
+                <div class="logo-box" style="width: 140px; height: 140px; border-radius: 40px; background: #fff; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; box-shadow: 0 0 100px rgba(247, 147, 26, 0.3);">
+                    <span style="font-size: 70px; color: var(--accent);">₿</span>
+                </div>
+                <h1 style="font-size:3rem; font-weight:900; letter-spacing:12px; margin-bottom:1.5rem; color:var(--accent);">BITSHOP</h1>
+                <p style="color:#fff; font-weight:900; letter-spacing:6px; font-size:12px; opacity:0.8; text-transform:uppercase;">Sovereign Decentralized Commerce</p>
+                <button class="btn-auth" style="width:auto; padding:20px 60px; border-radius:100px; font-size:12px; margin-top: 60px; background:var(--surface); border:1px solid var(--accent); color:var(--accent);" onclick="location.reload()">REPLAY THE VISION</button>
+            </div>`;
+            setTimeout(() => {
+                document.getElementById('outro').style.opacity = "1";
+            }, 100);
+        }
+    </script>
+</body>
+
+</html>
